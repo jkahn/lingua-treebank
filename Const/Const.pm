@@ -516,6 +516,7 @@ sub from_cnf_string {
 ##################################################################
 sub from_penn_string {
     my __PACKAGE__ $self = shift;
+    my $class = ref $self;
     my $text = shift;
     # pass it a complete constituent in text form.
 
@@ -560,7 +561,7 @@ sub from_penn_string {
 	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
-	    my __PACKAGE__ $child = $Lingua::Treebank::CONST_CLASS->new();
+	    my __PACKAGE__ $child = $class->new();
 	    $child->from_penn_string($childtext);
 
 	    $self->append($child);
