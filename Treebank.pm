@@ -208,6 +208,28 @@ Lingua::Treebank - Perl extension for manipulating the Penn Treebank format
 
 =head1 DESCRIPTION
 
+This class knows how to read two treebank formats, the Penn format and
+the Chomsky Normal Form (CNF) format.  These formats differ in how
+they handle terminal nodes.  The Penn format places pre-terminal part
+of speech tags in the left-hand position of a parenthesis-delimited
+pair, just like it does non-terminal nodes.  The CNF format attaches
+pre-terminal tags to the word with an underscore.  For example, the
+sentence "I spoke" would be rendered in each format as follows:
+
+    (S
+        (NP
+            (N I))
+        (VP
+            (V spoke)))
+            Penn
+
+    (S
+        (NP
+            I_N)
+        (VP
+            V spoke_V))
+     Chomsky Normal Form
+
 Almost all the interesting tree-functionality is in the
 constituent-forming package (included in this distribution, see
 L<Lingua::Treebank::Const>).
