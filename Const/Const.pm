@@ -395,7 +395,12 @@ sub as_penn_text {
     $child_prolog = $CHILD_PROLOG if not defined $child_prolog;
 
     # begin composition of text
-    my $text = '(' . $self->tag() . ' ';
+    my $label = $self->tag();
+    if (defined $self->annot()) {
+	$label .= '-' . $self->annot();
+    }
+
+    my $text = '(' . $label . ' ';
 
     if ($self->is_terminal) {
 	$text .= $self->word();
@@ -967,6 +972,10 @@ self->insert_before($node)  # error if node not child of self
 self->next_sib
 self->prev_sib
 
+
+=head2 FIXME
+
+add string overload ?
 
 =head2 EXPORT
 
