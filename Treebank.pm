@@ -24,7 +24,7 @@ our $CONST_CLASS = 'Lingua::Treebank::Const';
 sub from_penn_file {
     my ($class, $file) = @_;
 
-    open (my $fh, "<", $file) or die "couldn't open $file: $!\n";
+    open (my $fh, "<$file") or die "couldn't open $file: $!\n";
     my @results = $class->from_penn_fh($fh);
     close $fh or die "couldn't close $file: $!\n";
 
@@ -96,6 +96,67 @@ sub from_penn_fh {
 
     return @utterances;
 }
+
+
+sub from_cnf_file {
+    my ($class, $file) = @_;
+
+    open (my $fh, "<$file") or die "couldn't open $file: $!\n";
+    my @root_nodes = $class->from_cnf_fh($fh);
+    close $fh or die "couldn't close $file: $!\n";
+
+    return @root_nodes;
+}
+
+# BUGBUG Should share code with from_penn_fh
+sub from_cnf_fh {
+    my ($class, $fh) = @_;
+
+    my @root_nodes;
+  LINE:
+    while (<$fh>) {
+	chomp;
+	s/#.*$//; # Remove comments
+	next LINE if (/^\s*$/); # Skip empty lines.
+	next LINE if (/^<s.*>$/); # Skip sentence annotation used by
+                                  # the Structured Language Model.
+
+      NODE:
+	while (length $_) {
+	    my $text;
+	    ($text, $_) = Text::Balanced::extract_bracketed($_, '()');
+
+	    # Did we fail to extract bracketed text?
+	    if (defined $@) {
+		die "Text::Balanced said: $@->{error} at $@->{pos} in string $_\n";
+	    }
+
+	    if (length $text) {
+		# The bracketed text is a CNF treebank constituent.
+		my Lingua::Treebank::Const $node =
+		  Lingua::Treebank::Const->new->from_cnf_string($text);
+
+		if (not defined $node) {
+		    warn "couldn't parse '$text', remaining data '$_; in line $.filehandle ignored";
+		    last NODE;
+		}
+
+		push @root_nodes, $node;
+	    }
+	    else {
+		# No token extractable.
+		warn "unrecognized data '$_', remaining in line $. ignored\n";
+		last NODE;
+	    }
+	}
+    }
+
+    return @root_nodes;
+}
+
+
+
+
 ##################################################################
 sub cite_warning {
     my $text = shift;
@@ -171,11 +232,21 @@ C<Lingua::Treebank::Const>.
 
 =item from_penn_file
 
-given a file, open it, extract the constituents, and return the roots.
+given a Penn treebank file, open it, extract the constituents, and
+return the roots.
 
 =item from_penn_fh
 
-given a filehandle, extract the constituents and return the roots.
+given a Penn treebank filehandle, extract the constituents and return the roots.
+
+=item from_cnf_file
+
+given a Chomsky normal form file, open it, extract the constituents, and
+return the roots.
+
+=item from_cnf_fh
+
+given a Chomsky normal form filehandle, extract the constituents and return the roots.
 
 =back
 
