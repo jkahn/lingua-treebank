@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 21;
+use Test::More tests => 24;
 BEGIN { use_ok('Lingua::Treebank::Const') };
 
 #########################
@@ -87,4 +87,27 @@ foreach (@words) {
 
 is($string, ' Joe likes Bach .', "'Joe likes Bach .'");
 
+my $ex30 = <<EOEX30;
+(SQ
+    (S
+      (INTJ (UH Uh) )
+      (, ,)
+      (NP-SBJ (EX there) )
+      (VP (BES 's)
+        (ADVP (RB really) )
+        (NP-PRD (DT a) (NN lot) )))
+    (, ,)
+    (SQ (VBZ is) (RB n't)
+      (NP-SBJ (RB there) )
+      (NP-PRD (-NONE- *?*) ))
+    (. .) (-DFL- E_S) ))
+EOEX30
+my $funky = PACK->new();
 
+isa_ok($funky, PACK, 'funky');
+
+$funky->from_penn_string($ex30);
+ok(1, 'able to read in "funky" string');
+
+my @terminals = $funky->get_all_terminals();
+cmp_ok(scalar @terminals, '==', 14, "14 terminal nodes in funky");
