@@ -16,10 +16,10 @@ our $VERSION = '0.03';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
-our $CONST_PACKAGE = 'Lingua::Treebank::Const';
 ##################################################################
 use Text::Balanced 'extract_bracketed';
 use Lingua::Treebank::Const;
+our $CONST_CLASS = 'Lingua::Treebank::Const';
 ##################################################################
 sub from_penn_file {
     my ($class, $file) = @_;
@@ -35,8 +35,13 @@ sub from_penn_fh {
     my ($class, $fh) = @_;
 
     my $rawTrees;
-  LINE:
 
+    if (not UNIVERSAL::isa($CONST_CLASS, 'Lingua::Treebank::Const')) {
+	carp "CONST_CLASS value $CONST_CLASS",
+	  " doesn't seem to be a subclass of Lingua::Treebank::Const\n";
+    }
+
+  LINE:
     while (<$fh>) {
 
         chomp;              # remove newlines
@@ -69,8 +74,7 @@ sub from_penn_fh {
 	}
 
 	if (length $token) {
-	    my $utt = $CONST_PACKAGE->new();
-	    $utt = $utt->from_penn_string($token);
+	    my $utt = $CONST_CLASS->new->from_penn_string($token);
 	    if (defined $utt) {
 		push @utterances, $utt;
 	    }
@@ -146,6 +150,18 @@ Lingua::Treebank - Perl extension for manipulating the Penn Treebank format
 Almost all the interesting tree-functionality is in the
 constituent-forming package (included in this distribution, see
 L<Lingua::Treebank::Const>).
+
+=head1 Variables
+
+=over
+
+=item CONST_CLASS
+
+The value C<Lingua::Treebank::CONST_CLASS> indicates what class should
+be used as the class for constituents.  The default is
+C<Lingua::Treebank::Const>; it will generate an error to use a value
+for $Lingua::Treebank::CONST_CLASS that is not a subclass of
+C<Lingua::Treebank::Class>.
 
 =head1 Methods
 

@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use Carp;
 
+use Lingua::Treebank;
 our $VERSION = '0.03';
 our $VERBOSE = $Lingua::Treebank::VERBOSE;
 ##################################################################
@@ -22,7 +23,6 @@ use overload
   fallback => 1, # numeric tests measure memory location
   ;
 use Text::Balanced 'extract_bracketed';
-use Lingua::Treebank;
 ##################################################################
 our $INDENT_CHAR = ' ' x 4;
 our $CHILD_PROLOG = "\n";
@@ -475,6 +475,45 @@ sub as_penn_text {
     return $text;
 }
 ##################################################################
+sub from_cnf_string {
+    my __PACKAGE__ $self = shift;
+    my $class = ref $self;
+    local $_ = shift;
+    s/^\s+//;
+    s/\s+$//;
+    if (s/^ \( \s* (.*) \s* \) $/$1/x) {
+	s/^(\S+)\s*//;
+	my $tag = $1;
+	$self->tag($tag);
+	while (length $_) {
+	    my $childtext;
+	    if ( /^\(/ ) {
+		$childtext = extract_bracketed($_, "()");
+		# BUGBUG check for errors here?
+	    }
+	    else {
+		s/^(\S+)\s*// or carp "couldn't find text in $_\n";
+		$childtext = $1;
+	    }
+	    my __PACKAGE__ $child =
+#  	      $Lingua::Treebank::CONST_CLASS->new();
+	      $class->new();
+	    $child->from_cnf_string($childtext);
+	    $self->append($child);
+	    s/^\s+//;
+	}
+    }
+    elsif (/^([^_]+)_(\S+)$/) {
+	my ($word, $tag) = ($1, $2);
+	$self->word($word);
+	$self->tag($tag);
+    }
+    else {
+	croak "can't parse '$_'";
+    }
+    return $self;
+}
+##################################################################
 sub from_penn_string {
     my __PACKAGE__ $self = shift;
     my $text = shift;
@@ -521,7 +560,7 @@ sub from_penn_string {
 	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
-	    my $child = (ref $self)->new();
+	    my __PACKAGE__ $child = $Lingua::Treebank::CONST_CLASS->new();
 	    $child->from_penn_string($childtext);
 
 	    $self->append($child);
@@ -685,6 +724,30 @@ sub append {
     $self->insert_at(scalar @{$self->children}, @daughters);
 }
 ##################################################################
+sub insert_before {
+    my __PACKAGE__ $self = shift;
+
+    my $parent = $self->parent();
+    my $position = $parent->get_index($self);
+
+    my @sibs = @_;
+    $parent->insert_at($position, @sibs);
+
+    return $self;
+}
+##################################################################
+sub insert_after {
+    my __PACKAGE__ $self = shift;
+
+    my $parent = $self->parent();
+    my $position = $parent->get_index($self);
+
+    my @sibs = @_;
+    $parent->insert_at($position + 1, @sibs);
+
+    return $self;
+}
+##################################################################
 sub insert_at {
     my __PACKAGE__ $self     = shift;
     my $position = shift;
@@ -756,6 +819,11 @@ sub children {
     }
     # else no args
     return $self->[ CHILDREN ];
+}
+##################################################################
+sub num_children {
+    my $self = shift;
+    return scalar @{$self->[ CHILDREN ]};
 }
 ##################################################################
 sub parent {
@@ -872,7 +940,7 @@ Lingua::Treebank::Const - Object modeling constituent from a treebank
     (. .) )
   TREE
 
-  my $utt = Lingua::Treebank::Const->new->from_penn_string($text)
+  my $utt = Lingua::Treebank::Const->new->from_penn_text($text)
 
   print $utt->as_penn_text(), "\n";;
 
@@ -918,7 +986,7 @@ C<A>.
 =item new
 
 Constructs a new (uninitialized) token.  If starting from text, can be
-used together with the C<from_penn_string> initialization method, as
+used together with the C<from_penn_text> initialization method, as
 below:
 
   my $text = <<EOTREE
