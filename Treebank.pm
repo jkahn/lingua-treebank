@@ -16,6 +16,7 @@ our $VERSION = '0.03';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
+our $CONST_PACKAGE = 'Lingua::Treebank::Const';
 ##################################################################
 use Text::Balanced 'extract_bracketed';
 use Lingua::Treebank::Const;
@@ -68,7 +69,8 @@ sub from_penn_fh {
 	}
 
 	if (length $token) {
-	    my $utt = Lingua::Treebank::Const->new->from_penn_string($token);
+	    my $utt = $CONST_PACKAGE->new();
+	    $utt = $utt->from_penn_string($token);
 	    if (defined $utt) {
 		push @utterances, $utt;
 	    }
