@@ -161,7 +161,7 @@ The value C<Lingua::Treebank::CONST_CLASS> indicates what class should
 be used as the class for constituents.  The default is
 C<Lingua::Treebank::Const>; it will generate an error to use a value
 for $Lingua::Treebank::CONST_CLASS that is not a subclass of
-C<Lingua::Treebank::Class>.
+C<Lingua::Treebank::Const>.
 
 =head1 Methods
 
