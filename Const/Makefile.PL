@@ -6,7 +6,6 @@ WriteMakefile(
     'NAME'		=> 'Lingua::Treebank::Const',
     'VERSION_FROM'	=> 'Const.pm', # finds $VERSION
     'PREREQ_PM'		=> {
-			    Class::Struct  => '0.61',
 			    Text::Balanced => '1.89',
 			   },
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
