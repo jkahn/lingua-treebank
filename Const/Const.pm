@@ -7,12 +7,9 @@ use Carp;
 
 our $VERSION = '0.01';
 ##################################################################
-use Class::Struct;
-struct ( tag      => '$', # e.g. "NP" ( from '(NP-SUBJ John)' )
-	 annot    => '$', # e.g. "SUBJ"
-	 word     => '$', # e.g. "John"
-	 parent   => __PACKAGE__,  # back-pointer up tree
-	 children => '@' );
+use constant {
+    TAG => 1, ANNOT => 2, WORD => 3, PARENT => 4, CHILDREN => 5
+};
 use Text::Balanced 'extract_bracketed';
 ##################################################################
 our $INDENT_CHAR = ' ' x 4;
@@ -52,6 +49,42 @@ sub find_common_ancestor {
     }
 
     return $matriarch;
+}
+##################################################################
+sub equiv_to {
+    my __PACKAGE__ $self  = shift;
+    my __PACKAGE__ $other = shift;
+
+    if ($self->is_terminal()) {
+	return 0 unless $other->is_terminal();
+
+	if ($self->tag() ne $other->tag()) {
+	    return 0;
+	}
+	if ($self->word() ne $other->word()) {
+	    return 0;
+	}
+
+	# otherwise it all passes:
+	return 1;
+    }
+    else {
+	# self non-terminal
+	return 0 if $other->is_terminal();
+
+	# different number of children
+	return 0 if (@{ $self->children() } != @{ $other->children() });
+
+	foreach my $idx ( 0 .. $#{ $self->children() } ) {
+	    my __PACKAGE__ $lchild = $self->children($idx);
+	    my __PACKAGE__ $rchild = $other->children($idx);
+	    if (not $lchild->equiv_to($rchild)) {
+		return 0;
+	    }
+	}
+	# otherwise it all passes
+	return 1;
+    }
 }
 ##################################################################
 # height/depth functions
@@ -125,7 +158,7 @@ sub height {
 
 	# choose the largest height among the children, return that
 	# (+1)
-	foreach my __PACKAGE__ $d (@{$self->children()}) {
+	foreach my __PACKAGE__ $d (@{ $self->children() }) {
 	    my $this_height = $d->height();
 	    if ($max < $this_height) {
 		$max = $this_height;
@@ -372,7 +405,7 @@ sub as_penn_text {
 
 	foreach my  __PACKAGE__ $d ( @{$self->children} ) {
 	    $text .= $child_prolog;
-	    $text .= ($indentChar x $step);
+	    $text .= ($indentChar x ($step + 1));
 	    $text .= $d->as_penn_text($step + 1, $indentChar, $child_prolog);
 	}
     }
@@ -575,7 +608,7 @@ sub detach_at {
     }
 
     # remove links
-    $d->parent(undef);
+    $d->clear_parent();
     splice @{$self->children}, $index, 1, (); # replace with empty list
 }
 ##################################################################
@@ -608,23 +641,153 @@ sub insert_at {
 ##################################################################
 sub is_root {
     my __PACKAGE__ $self = shift;
-    return ( not defined $self->parent );
+    return ( not defined $self->[PARENT] );
 }
 ##################################################################
 sub is_terminal {
     my __PACKAGE__ $self = shift;
-    if (defined $self->word) {
+    if (defined $self->[WORD]) {
 	if ( @{$self->children()} ) {
 	    carp "how did I get children AND a word?";
 	}
 	return 1;
     }
     else {
-	if ( not @{$self->children()} ) {
+	if ( not @{ $self->children() } ) {
 	    carp "how did I get neither a word NOR children?";
+	    return 1; # might as well terminate
 	}
 	return 0;
     }
+}
+##################################################################
+sub children {
+    my $self = shift;
+    if (@_ > 2) {
+	croak "children() called with >2 args";
+    }
+    if (@_ == 2) {
+	# e.g. $d->children(1, $foo_child);
+	croak "wrong package type: ", ref($_[1]),
+	  " .  Expecting ", __PACKAGE__
+	    unless UNIVERSAL::isa($_[1], __PACKAGE__);
+
+	return $self->[ CHILDREN ][ $_[0] ] = $_[1];
+
+    }
+    if (@_ == 1) {
+	if (ref $_[0] eq 'ARRAY') {
+	    # reset entire array,
+	    # e.g. $d->children([ $foo, $bar ])
+	    foreach (@{$_[1]}) {
+		if (not UNIVERSAL::isa($_, __PACKAGE__)) {
+		    croak "ref ", ref $_, " in arrayref not a ",
+		      __PACKAGE__;
+		}
+	    }
+	    $self->[ CHILDREN ] = $_[1];
+	}
+	else {
+	    # getting single element
+	    # e.g. $d->children(2);
+	    return $self->[ CHILDREN ][ $_[0] ];
+	}
+    }
+    # else no args
+    return $self->[ CHILDREN ];
+}
+##################################################################
+sub parent {
+    my __PACKAGE__ $self = shift;
+    if (@_) {
+	# setting
+	if (@_ > 1) {
+	    croak "parent called with >1 argument";
+	}
+	my $val = $_[0];
+	croak "parent argument wrong class"
+	  if ( not UNIVERSAL::isa($val, __PACKAGE__) );
+	$self->[PARENT] = $val;
+    }
+    else {
+	# getting
+	return $self->[PARENT];
+    }
+}
+##################################################################
+sub clear_parent {
+    my $self = shift;
+    $self->[PARENT] = undef;
+}
+##################################################################
+sub tag {
+    my __PACKAGE__ $self = shift;
+    if (@_) {
+	# setting
+	if (@_ > 1) {
+	    croak "tag() called with >1 argument";
+	}
+	carp "tag() passed a reference!" if ref($_[0]);
+	$self->[TAG] = $_[0];
+    }
+    else {
+	# getting
+	return $self->[TAG];
+    }
+}
+##################################################################
+sub annot {
+    my __PACKAGE__ $self = shift;
+    if (@_) {
+	# setting
+	if (@_ > 1) {
+	    croak "annot() called with >1 argument";
+	}
+	carp "annot() passed a reference!" if ref($_[0]);
+	$self->[ANNOT] = $_[0];
+    }
+    else {
+	# getting
+	return $self->[ANNOT];
+    }
+}
+##################################################################
+sub word {
+    my __PACKAGE__ $self = shift;
+    if (@_) {
+	# setting
+	if (@_ > 1) {
+	    croak "word() called with >1 argument";
+	}
+
+	if (@{$self->[CHILDREN]}) {
+	    carp "can't assign a word when children exist, ignoring!";
+	    return;
+	}
+
+	carp "word() passed a reference!" if ref($_[0]);
+	$self->[WORD] = $_[0];
+    }
+    else {
+	# getting
+	return $self->[WORD];
+    }
+}
+##################################################################
+sub new {
+    my $class = shift;
+    my %args = @_;
+    my $self = bless [], $class;
+    $self->[CHILDREN] = [];
+    foreach (keys %args) {
+	if ($self->can($_)) {
+	    $self->$_($args{$_});
+	}
+	else {
+	    carp "unknown argument $_";
+	}
+    }
+    return $self;
 }
 ##################################################################
 
