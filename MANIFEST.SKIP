@@ -4,3 +4,4 @@
 \bMakefile$
 ^blib/
 \bpm_to_blib$
+.cvsignore$
