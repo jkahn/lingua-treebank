@@ -158,21 +158,22 @@ sub depth {
 # and so is probably the fastest).
 
 # simple recursive implementation
-#      if ( $self->is_root() ) {
-#  	return 0;
-#      }
-#      else {
-#  	return $self->parent->depth() + 1;
-#      }
+
+##      if ( $self->is_root() ) {
+##  	return 0;
+##      }
+##      else {
+##  	return $self->parent->depth() + 1;
+##      }
 
 # non-recursive implementation
-#      my $d = 0;
-#      my __PACKAGE__ $p = $self->parent;
-#      while (defined $p) {
-#  	$h++;
-#  	$p = $p->parent;
-#      }
-#      return $d;
+##      my $d = 0;
+##      my __PACKAGE__ $p = $self->parent;
+##      while (defined $p) {
+##  	$h++;
+##  	$p = $p->parent;
+##      }
+##      return $d;
 
 }
 ##################################################################
@@ -527,16 +528,16 @@ sub flatten {
     # pull up all terminals to be children of the instance here,
     # regardless of how deep they are
 
-    #  A->flatten()
-    #
-    #      /         /
-    #     A   ==>   A__
-    #    / \	   /|\ \
-    #   X   B	  C F D G
-    #  /|\   \
-    # C F D   E
-    #          \
-    #           G
+    ##  A->flatten()
+    ##
+    ##      /        /
+    ##     A   ==>  A__
+    ##    / \	   /|\ \
+    ##   X   B	  C F D G
+    ##  /|\   \
+    ## C F D   E
+    ##          \
+    ##           G
 
     my __PACKAGE__ $self = shift;
 
@@ -570,16 +571,16 @@ sub retract {
     # their children directly to the current node, retaining what
     # surface order they originally had:
 
-    #  A->retract(X)
-    #
-    #      /         /
-    #     A   ==>   A
-    #    / \	   /|\
-    #   X   B	  C D B
-    #  / \   \     / \ \
-    # C   D   E   F   G E
-    #    / \
-    #   F   G
+    ##  A->retract(X)
+    ##
+    ##      /        /
+    ##     A   ==>  A
+    ##    / \	   /|\
+    ##   X   B	  C D B
+    ##  / \   \    / \ \
+    ## C   D   E  F   G E
+    ##    / \
+    ##   F   G
 
     my __PACKAGE__ $self = shift;
     my __PACKAGE__ $daughter = shift;
