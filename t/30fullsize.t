@@ -20,13 +20,12 @@ ok(defined @utts, "successfully read in!");
 
 cmp_ok(scalar @utts, '==', 335);
 
-#  my $i = 0;
-#  foreach (@utts) {
-#      $i++;
-#      warn "utterance $i\n";
-#      my @words = $_->get_all_terminals();
-#      diag (join (" ", map {$_->word()} @words), "\n");
-#  }
+my $i = 0;
+foreach (@utts) {
+    $i++;
+    my @words = $_->get_all_terminals();
+#      diag (join '', "utterance $i: ", map {"$_"} @words, "\n");
+}
 
 
 __END__
@@ -760,8 +759,8 @@ __END__
                 (NP (DT a) (NN female) )))
             (, ,) 
             (VP 
-              (NP=1 (JJ female) )
-              (PP=2 (IN over) 
+              (NP-1 (JJ female) )
+              (PP-2 (IN over) 
                 (NP (DT a) (NN male) )))))
         (PRN 
           (, ,)

@@ -19,6 +19,10 @@ ok(defined @utts, "successfully read in!");
 
 cmp_ok(scalar @utts, '==', 14);
 
+foreach (@utts) {
+    my @words = $_->get_all_terminals();
+}
+
 
 __END__
 *x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*x*
@@ -37,7 +41,7 @@ __END__
 ( (CODE (SYM SpeakerB1) (. .) ))
 ( (INTJ (UH Hello) (. .) (-DFL- E_S) ))
 ( (CODE (SYM SpeakerA2) (. .) ))
-( (INTJ (UH Hello) 
+( (INTJ (UH Hello)
     (, ,)
     (-DFL- E_S) ))
 ( (CODE (SYM SpeakerB3) (. .) ))
