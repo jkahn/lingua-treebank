@@ -169,7 +169,7 @@ sub depth {
 # non-recursive implementation
 ##      my $d = 0;
 ##      my __PACKAGE__ $p = $self->parent;
-##      while (defined $p) {
+##      until ( $p->is_root() ) {
 ##  	$h++;
 ##  	$p = $p->parent;
 ##      }
@@ -478,13 +478,18 @@ sub from_penn_string {
 	return; # undef
     }
 
-    if ($tag =~ m/ ^ ( [^-]+? ) - ( .* ) $/x ) {
-	$tag = $1;
-	$self->annot( $2 );
+    if ($tag =~ m/ ^ ( [^-]+? ) ([-=]) ( .* ) $/x ) {
+	my $short_tag = $1;
+	if ($2 eq '=') {
+	    warn "found '=' (should be '-') separating annotation ".
+	      "in tag $tag\n";
+	}
+	$self->annot( $3 );
+	$self->tag( $short_tag );
     }
-
-    $self->tag($tag);
-
+    else {
+	$self->tag($tag);
+    }
     while (length $childrentext) {
 	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
@@ -693,7 +698,7 @@ sub is_terminal {
     }
     else {
 	if ( not @{ $self->children() } ) {
-	    carp "how did I get neither a word NOR children?";
+	    croak "how did I get neither a word NOR children?";
 	    return 1; # might as well terminate
 	}
 	return 0;
