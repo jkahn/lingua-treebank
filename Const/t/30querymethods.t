@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 27;
+use Test::More tests => 51;
 BEGIN { use_ok('Lingua::Treebank::Const') };
 
 #########################
@@ -14,6 +14,7 @@ BEGIN { use_ok('Lingua::Treebank::Const') };
 # its man page ( perldoc Test::More ) for help writing this test script.
 
 use constant PACK => 'Lingua::Treebank::Const';
+my %examples;
 
 can_ok(PACK,
        qw{ root },
@@ -32,7 +33,7 @@ ok( defined $d, "new() returned something" );
 
 isa_ok($d, PACK, 'root node');
 
-my $ex1 = <<EOEX1;
+$examples{ex1} = <<EOEX1;
 (S
   (NP
     (NNP Joe)
@@ -47,7 +48,7 @@ my $ex1 = <<EOEX1;
 )
 EOEX1
 
-$d->from_penn_string($ex1);
+$d->from_penn_string($examples{ex1});
 
 #05
 ok(1, "passed from_penn_string");
@@ -87,20 +88,29 @@ foreach (@words) {
 
 is($string, ' Joe likes Bach .', "'Joe likes Bach .'");
 
-my $ex30 = <<EOEX30;
+$examples{ex30} = <<EOEX30;
  (NP-PRD (-NONE- *?*) )
 EOEX30
+$words{ex30} = "*?*";
 
-my $ex31 = <<EOEX31;
+$examples{ex31} = <<EOEX31;
+(SQ (VBZ is) (RB n't)
+    (NP-SBJ (RB there) )
+    (NP-PRD (-NONE- *?*) ) )
+EOEX31
+$words{ex31} = "is n't there *?*";
+
+$examples{ex32} = <<'EOEX32';
 (SQ
-    (SQ (VBZ is) (RB n't)
+  (SQ (VBZ is) (RB n't)
       (NP-SBJ (RB there) )
-      (NP-PRD (-NONE- *?*) ))
+      (NP-PRD (-NONE- *?*) ) )
     (. .) (-DFL- E_S)
 )
-EOEX31
+EOEX32
+$words{ex32} = "is n't there *?* . E_S";
 
-my $ex32 = <<EOEX32;
+$examples{ex33} = <<EOEX33;
 (SQ
     (S
       (INTJ (UH Uh) )
@@ -114,13 +124,86 @@ my $ex32 = <<EOEX32;
       (NP-SBJ (RB there) )
       (NP-PRD (-NONE- *?*) ))
     (. .) (-DFL- E_S) )
-EOEX32
-#22->27
-foreach ($ex30, $ex31, $ex32) {
+EOEX33
+$words{ex33} = "Uh , there 's really a lot , is n't there *?* . E_S";
+
+$examples{ex40} = <<EOEX40;
+(S
+  (NP-SBJ (EX there) )
+  (ADVP (RB really) )
+  (VP (VBZ is)
+     (NP-PRD (-NONE- *?*) )))
+EOEX40
+$words{ex40} = "there really is *?*";
+
+$examples{ex41} = <<EOEX41;
+(SBAR (-NONE- 0) )
+EOEX41
+$words{ex41} = "0";
+
+$examples{ex42} = <<EOEX42;
+(SBAR (-NONE- 0)
+  (S
+    (NP-SBJ (EX there) )
+    (ADVP (RB really) )
+    (VP (VBZ is)
+       (NP-PRD (-NONE- *?*) ))))
+EOEX42
+$words{ex42} = "0 there really is *?*";
+
+$examples{ex43} = <<EOEX43;
+(VP (VBP think)
+    (SBAR (-NONE- 0)
+      (S
+        (NP-SBJ (EX there) )
+        (ADVP (RB really) )
+        (VP (VBZ is)
+          (NP-PRD (-NONE- *?*) )))))
+EOEX43
+$words{ex43} = "think 0 there really is *?*";
+
+
+$examples{ex44} = <<EOEX44;
+ (S
+    (NP-SBJ (PRP I) )
+    (VP (VBP think) 
+      (SBAR (-NONE- 0) 
+        (S 
+          (NP-SBJ (EX there) )
+          (ADVP (RB really) )
+          (VP (VBZ is) 
+            (NP-PRD (-NONE- *?*) )))))
+    (. .) (-DFL- E_S) )
+EOEX44
+$words{ex44} = "I think 0 there really is *?* . E_S";
+
+$examples{ex45} = <<EOEX45;
+( (S 
+    (NP-SBJ (PRP I) )
+    (VP (VBP think) 
+      (SBAR (-NONE- 0) 
+        (S 
+          (NP-SBJ (EX there) )
+          (ADVP (RB really) )
+          (VP (VBZ is) 
+            (NP-PRD (-NONE- *?*) )))))
+    (. .) (-DFL- E_S) ))
+EOEX45
+$words{ex45} = "I think 0 there really is *?* . E_S";
+
+#22->51 (10 ex * 3 tests each)
+foreach ( qw{ ex30 ex31 ex32 ex33 },
+	  qw{ ex40 ex41 ex42 ex43 ex44 ex45 } ) {
     my $funky = PACK->new();
 
-    isa_ok($funky, PACK, 'funky');
+    isa_ok($funky, PACK, $_);
 
-    $funky->from_penn_string($_);
-    ok(1, 'able to read in "funky" string');
+    $funky->from_penn_string($examples{$_});
+    ok(1, "able to read in '$ex' string");
+
+    my @leaflist = $funky->get_all_terminals();
+    is( $words{$_}, join (" ", map {$_->word()} @leaflist), "$_ words match");
+
 }
+
+
