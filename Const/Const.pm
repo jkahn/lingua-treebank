@@ -10,10 +10,43 @@ our $VERSION = '0.01';
 use constant {
     TAG => 1, ANNOT => 2, WORD => 3, PARENT => 4, CHILDREN => 5
 };
+use overload
+  '""'     => \&stringify,
+  '0+'     => \&numerify, # find location in memory
+  fallback => 1, # numeric tests measure memory location
+  ;
 use Text::Balanced 'extract_bracketed';
 ##################################################################
 our $INDENT_CHAR = ' ' x 4;
 our $CHILD_PROLOG = "\n";
+our $STRINGIFY = 'as_penn_text';
+##################################################################
+sub numerify {
+    # strictly return the number indicating the location in memory
+    my $refstr= overload::StrVal(shift @_);
+    if ($refstr =~ /\( 0x ([0-9a-fA-F]+) \) $/x) {
+	return hex $1;
+    }
+    return $refstr;
+}
+##################################################################
+sub stringify {
+    my $self = shift;
+    if ($STRINGIFY eq 'as_penn_text') {
+	return $self->as_penn_text();
+    }
+    elsif ($STRINGIFY eq 'words') {
+	return join ' ', map { $_->word() } $self->get_all_terminals();
+    }
+    elsif ($STRINGIFY eq 'preterm_tags') {
+	return join ' ', map { $_->tag() } $self->get_all_terminals();
+    }
+    else {
+	carp "don't recognize \$",
+	  __PACKAGE__, "::STRINGIFY value of $STRINGIFY";
+    }
+}
+
 ##################################################################
 sub find_common_ancestor {
 
@@ -177,7 +210,7 @@ sub get_index {
 	return;
     }
 
-    if ( $daughter->parent != $self ) {
+    if (not $self == $daughter->parent ) {
 	carp "argument not daughter of instance, can't get index";
 	return ;
     }
