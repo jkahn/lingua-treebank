@@ -12,6 +12,7 @@ README
 # Lingua::Treebank test files
 t/1.t
 t/2read.t
+t/30fullsize.t
 
 # Lingua::Treebank::Const test files
 Const/t/01use.t
