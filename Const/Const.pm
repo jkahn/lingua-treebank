@@ -811,7 +811,7 @@ sub replace {
     my @replacements = @_;
 
     carp "argument not a child of instance, can't replace!"
-      unless ($_->parent == $self);
+      unless ($target->parent == $self);
 
     my $index = $self->get_index($target);
 
