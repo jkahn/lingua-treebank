@@ -8,6 +8,7 @@ use Carp;
 use Lingua::Treebank;
 our $VERSION = '0.03';
 our $VERBOSE = $Lingua::Treebank::VERBOSE;
+our $BF_TRAVERSAL;
 ##################################################################
 use constant {
     TAG      => 1,
@@ -61,6 +62,68 @@ sub stringify {
     }
 }
 
+##################################################################
+# High-power generic function for crawling the tree. Most of the other
+# functions could probably be implemented in terms of this one.
+sub walk {
+    my ($self, $action, $stop_criterion, $state, $bf_traversal) = @_;
+
+    croak "walk()'s first non-self arg not defined"
+      unless (defined $action);
+    if (ref $action eq '') {
+	$action = $self->can($action);
+	if (not defined $action) {
+	    croak "couldn't find method $action to call from within walk"
+	}
+    }
+    elsif (not ref $action eq 'CODE') {
+	croak "walk()'s first non-self arg not CODE-ref"
+    }
+
+    if (defined $stop_criterion) {
+	if (ref $stop_criterion eq '') {
+	    $stop_criterion = $self->can($stop_criterion);
+	    croak "couldn't find method $stop_criterion ",
+	      " to call from within walk()"
+		if (not defined $stop_criterion);
+	}
+	elsif (not ref $stop_criterion eq 'CODE') {
+	    croak "walk()'s stop criterion arg not a CODE-ref";
+	}
+    }
+
+    my @children = ();
+    my @stack = ($self);
+
+    if (not defined $bf_traversal) {
+	$bf_traversal = $BF_TRAVERSAL;
+    }
+
+  NODE:
+    while (1) {
+	# take one off the front of the line
+	my $node = shift @stack;
+	return if not defined $node;
+
+	&{$action}($node, $state);
+
+	if ( defined $stop_criterion
+	     and &{$stop_criterion}($node, $state) ) {
+	    # don't put the children on the agenda
+	    next NODE;
+	}
+
+	# else include node's children
+	if ($bf_traversal) {
+	    # children go in the back of the line
+	    push @stack, @{$node->children()};
+	}
+	else { # depth-first traversal
+	    # children go in the front of the line
+	    unshift @stack, @{$node->children()};
+	}
+    }
+}
 ##################################################################
 sub find_common_ancestor {
 
@@ -288,6 +351,55 @@ sub root {
     }
 }
 ##################################################################
+# Return a list of ancestors of a node matching a criteria given in a
+# function parameter.
+#    my $path = <<EOTREE;
+#    (NP
+#     (NP
+#      (VP
+#       (N dog))))
+#    EOTREE
+#
+#    my $node = Lingua::Treebank::TB3Const->new->from_penn_string($text);
+#    my @terms = $node->get_all_terminals();
+#    my $node = shift @terms;
+#    my @ancestors = $node->select_ancestors(sub{$_[0]->tag() eq "NP"});
+sub select_ancestors {
+    my __PACKAGE__ $self = shift;
+    my $criteria = shift;
+
+    my @ancestors = ();
+
+    $self = $self->parent();
+  PARENT:
+    while (defined $self) {
+	push @ancestors, $self if (&$criteria($self));
+	$self = $self->parent();
+    }
+
+    return @ancestors;
+}
+##################################################################
+# Return a list of children of a node matching a criteria given in a
+# function parameter.  The children are searched breadth-first.
+sub select_children {
+    my __PACKAGE__ $self = shift;
+    my $criteria = shift;
+
+    my @children = ();
+    my @stack = ($self);
+  CHILD:
+    while (1) {
+	my $node = pop @stack;
+	last CHILD if (not $node);
+
+	push @children, $node if (&$criteria($node));
+	push @stack, @{$node->children()};
+    }
+
+    return @children;
+}
+##################################################################
 sub get_all_terminals {
     # returns all leaves in a left-right traversal
 
@@ -434,6 +546,34 @@ sub is_ancestor_of {
     my __PACKAGE__ $self = shift;
     my __PACKAGE__ $candidate = shift;
     return $candidate->is_descendant_of($self);
+}
+##################################################################
+# Are the two nodes siblings?
+#
+#  my $sibling = <<EOTREE;
+#  (S
+#   (NP
+#    (D the)
+#    (N boy))
+#   (VP
+#    ran))
+#  EOTREE
+#
+#  my $node = Lingua::Treebank::TB3Const->new()->from_penn_string($sibling);
+#  my @child = @{$node->children()};
+#  my $np = $child[0];
+#  my $vp = $child[1];
+#  print "This is true." if ($np->is_sibling($vp));
+sub is_sibling {
+    my __PACKAGE__ $self = shift;
+    my __PACKAGE__ $other = shift;
+
+    return 0 if ($self->is_root() or $other->is_root());
+
+    my __PACKAGE__ $parent = $self->find_common_ancestor($other);
+    return 0 if (not defined $parent);
+
+    return ($parent == $self->parent() and $parent == $other->parent());
 }
 ##################################################################
 # I/O methods (to/from text)
@@ -769,6 +909,27 @@ sub is_root {
     return ( not defined $self->[PARENT] );
 }
 ##################################################################
+# Is this an empty root node?
+#
+#    my $text = <<EOTREE;
+#    (
+#      (INTJ
+#          (UH Okay)
+#          (. .)
+#          (-DFL- E_S)))
+#    EOTREE
+#
+#    my $node = Lingua::Treebank::TB3Const->new->from_penn_string($text)
+#    print "This is true." if ($node->is_empty_root());
+#
+sub is_empty_root {
+    my __PACKAGE__ $self = shift;
+
+    return ($self->is_root() and
+	    not $self->tag() and
+	    scalar(@{$self->children()}) == 1 )
+}
+#################################################################
 sub is_terminal {
     my __PACKAGE__ $self = shift;
     if (defined $self->[WORD]) {
@@ -1115,6 +1276,13 @@ Takes presumed descendant as argument.
 Returns whether current instance is an ancestor of the presumed
 descendant.
 
+=item is_sibling
+
+Takes presumed sibling as argument.
+
+Returns whether current instance shares an immediate parent with the
+presumed sibling.
+
 =item height
 
 No arguments.
@@ -1183,6 +1351,16 @@ One argument: a presumed cousin.
 
 returns the lowest ancestor the instance and the cousin share (or
 undefined if they do not share an ancestor)
+
+=item select_ancestors
+
+=item select_children
+
+Both these methods take a subroutine as an argument and return those
+[child/ancestor] nodes that return true when the sub is called with
+the node as an argument.
+
+The expectation is that the sub will not modify the node.
 
 =back
 
@@ -1333,9 +1511,66 @@ any two objects, regardless of methods called on those objects).
 
 =back
 
+=head2 power user methods
+
+=over
+
+=item walk ( &action, &stop_crit, $state, $bf_traversal )
+
+An instance method. C<&action> argument is required, others are optional.
+
+Calls C<&action> (a subroutine ref) as a method on node and its
+children, recursively, passing the node under consideration and the
+C<$state> value (if provided).
+
+If C<&stop_crit> is defined, calls it on each node; when C<&stop_crit>
+returns true, children of that node are not pursued.
+
+For both C<action> and C<stop_crit> commands, if a string is passed,
+it will be called if a method by that name can be found in the object.
+
+C<$state> is passed into each of the child method calls.  This is
+convenient for things like pushing interesting elements onto a list,
+or updating a counter. It must be a scalar, but can be a reference.
+
+Passing a true value as C<$bf_traversal> tells C<walk()> to explore
+the tree breadth-first rather than depth-first.  passing a false (but
+defined) value forces depth-first.  Undefined values default to the
+value of C<$Lingua::Treebank::Const::BF_TRAVERSAL>, which is C<undef>
+(false) -- and thus depth-first by default.
+
+
+  # find out how many children each NP has, but don't count anything
+  # inside an EDITED node
+  my $action = sub {
+      my ($self, $state) = @_;
+      return unless $self->tag() eq 'NP';
+
+      # just print it 
+      print scalar @{$self->children}, "\n";
+
+      # or store it in the state variable
+      push @{$state}, scalar @{$self->children()};
+    };
+
+  my $stop_crit = sub {$_[0]->tag() eq 'EDITED'};
+
+  $tree->walk( $action, $stop_crit, \@counts );
+
+  use List::Util 'sum';
+  print "there were ", sum (@counts),
+        " total children of NP nodes\n";
+
+=back
+
 =head1 Class variables
 
 =over
+
+=item $Lingua::Treebank::Const::BF_TRAVERSAL
+
+Defaults to undefined. If true, changes the default behavior of the
+walk() method to be breadth-first rather than depth-first.
 
 =item $Lingua::Treebank::STRINGIFY
 
@@ -1438,6 +1673,26 @@ critically, earlier versions failed when the tag was empty and not
 followed by whitespace
 
 =back
+
+=item 0.08
+
+=item added new methods
+
+=over
+
+=item select_ancestors
+
+=item select_children
+
+=item is_empty_root
+
+=item walk
+
+=back
+
+=item new interface variable
+
+added $BF_TRAVERSAL for changing walk() method defaults
 
 =back
 
