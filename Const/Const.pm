@@ -390,12 +390,20 @@ sub from_penn_string {
     # records the tag plus a list of its subconstituents. If
     # subconstituents themselves have structure, then they will be
     # arrayrefs
-    my (@tags) = shift;
+
+    # JGK: why @tags? can't remember...
+#      my (@tags) = shift;
+
+
+    # JGK: modify this to call extract_bracketed immediately?
+    # how does this cope with broken data?
+
     my ($tag, $childrentext) =
       ($text =~ /^ \( ( [\S]* ) \s (.*\S) \s* \) $/sx);
 
     if (not defined $tag or not defined $childrentext) {
-	warn "couldn't match '$_' as a constituent!\n";
+	croak "couldn't find a constituent in '$text'";
+	return; # undef
     }
 
     if ($tag =~ m/ ^ ( [^-]+? ) - ( .* ) $/x ) {
@@ -409,8 +417,8 @@ sub from_penn_string {
 	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
-	    my __PACKAGE__ $child =
-	      __PACKAGE__->new->from_penn_string($childtext);
+	    my __PACKAGE__ $child = __PACKAGE__->new();
+	    $child->from_penn_string($childtext);
 
 	    $self->append($child);
 
@@ -424,11 +432,22 @@ sub from_penn_string {
 	else {
 	    # this is a word; we're done
 	    $self->word($childrentext);
+
+	    if ($childrentext =~ tr {()} {()} ) {
+		carp "found a parenthesis in word '$childrentext'; ",
+		  " this suggests that the data had unbalanced parens";
+	    }
+
+	    # eliminate text so that we can exit the while loop
+	    $childrentext = '';
+
 	    warn "trouble --  word found in token that "
 	      . "already had child constituents\n"
 		if @{$self->children};
 	}
     }
+
+    return $self;
 }
 ##################################################################
 # Tree modification methods
@@ -569,7 +588,7 @@ sub prepend {
 sub append {
     my __PACKAGE__ $self = shift;
     my @daughters = @_;
-    $self->insert_at(@{$self->children}, @daughters);
+    $self->insert_at(scalar @{$self->children}, @daughters);
 }
 ##################################################################
 sub insert_at {
@@ -595,13 +614,13 @@ sub is_root {
 sub is_terminal {
     my __PACKAGE__ $self = shift;
     if (defined $self->word) {
-	if ( @{$self->{children}} ) {
+	if ( @{$self->children()} ) {
 	    carp "how did I get children AND a word?";
 	}
 	return 1;
     }
     else {
-	if ( not @{$self->{children}} ) {
+	if ( not @{$self->children()} ) {
 	    carp "how did I get neither a word NOR children?";
 	}
 	return 0;
