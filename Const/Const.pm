@@ -521,7 +521,7 @@ sub from_penn_string {
 	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
-	    my $child = $Lingua::Treebank::CONST_PACKAGE->new();
+	    my $child = (ref $self)->new();
 	    $child->from_penn_string($childtext);
 
 	    $self->append($child);
