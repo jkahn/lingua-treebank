@@ -5,10 +5,15 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 ##################################################################
 use constant {
-    TAG => 1, ANNOT => 2, WORD => 3, PARENT => 4, CHILDREN => 5
+    TAG      => 1,
+    ANNOT    => 2,
+    WORD     => 3,
+    PARENT   => 4,
+    CHILDREN => 5,
+    NUM      => 6,
 };
 use overload
   '""'     => \&stringify,
@@ -22,12 +27,19 @@ our $CHILD_PROLOG = "\n";
 our $STRINGIFY = 'as_penn_text';
 ##################################################################
 sub numerify {
-    # strictly return the number indicating the location in memory
-    my $refstr= overload::StrVal(shift @_);
-    if ($refstr =~ /\( 0x ([0-9a-fA-F]+) \) $/x) {
-	return hex $1;
+    my $self = shift;
+    if (not defined $self->[NUM]) {
+	# fetch out the number indicating the location in memory
+	my $refstr= overload::StrVal( $self );
+	if ($refstr =~ /\( 0x ([0-9a-fA-F]+) \) $/x) {
+	    # cache it for later to save the regex
+	    $self->[NUM] = hex $1;
+	}
+	else {
+	    confess "numerify wasn't able to extract a numeric ref";
+	}
     }
-    return $refstr;
+    return $self->[NUM];
 }
 ##################################################################
 sub stringify {
@@ -118,6 +130,13 @@ sub equiv_to {
 	# otherwise it all passes
 	return 1;
     }
+}
+##################################################################
+sub equiv_tags {
+    croak "not implemented\n";
+}
+sub equiv_words {
+    croak "not implemented\n";
 }
 ##################################################################
 # height/depth functions
@@ -541,16 +560,7 @@ sub flatten {
     # pull up all terminals to be children of the instance here,
     # regardless of how deep they are
 
-    ##  A->flatten()
-    ##
-    ##      /        /
-    ##     A   ==>  A__
-    ##    / \	   /|\ \
-    ##   X   B	  C F D G
-    ##  /|\   \
-    ## C F D   E
-    ##          \
-    ##           G
+    # see POD below for better details
 
     my __PACKAGE__ $self = shift;
 
@@ -582,18 +592,9 @@ sub flatten {
 sub retract {
     # pulls in and removes one layer of non-terminal nodes, attaching
     # their children directly to the current node, retaining what
-    # surface order they originally had:
+    # surface order they originally had.
 
-    ##  A->retract(X)
-    ##
-    ##      /        /
-    ##     A   ==>  A
-    ##    / \	   /|\
-    ##   X   B	  C D B
-    ##  / \   \    / \ \
-    ## C   D   E  F   G E
-    ##    / \
-    ##   F   G
+    # see POD for more details
 
     my __PACKAGE__ $self = shift;
     my __PACKAGE__ $daughter = shift;
@@ -896,7 +897,13 @@ Note assumption that terminal nodes (those with defined C<word>
 values) will not have C<children>, and vice versa. This assumption is
 currently unchecked by the code.
 
-=head2 Class methods
+For a number of these methods, the jargonish notion of I<domination>
+plays a large role, so for those who might not know:
+
+a node C<A> I<dominates> another node C<B> if C<B> is a descendant of
+C<A>.
+
+=head1 Class methods
 
 =over
 
@@ -914,16 +921,39 @@ below:
     (. .) )
   TREE
 
-  my $utt = Lingua::Treebank::Const->new->from_penn_text($text)
+  my $utt = Lingua::Treebank::Const->new->from_penn_string($text)
 
 Otherwise, resulting new unit will have no values (C<parent>,
 C<children>, C<tag> or C<word> set by default.
 
 =back
 
-=head2 Instance methods
+=head1 Instance methods
 
-Each constituent has the following methods:
+=head2 creation methods
+
+These methods help to populate the fields of these objects from
+external data.
+
+=over
+
+=item from_penn_string
+
+given a string of the Penn format, e.g.,
+
+  (S
+    (NP-SBJ (DT this) )
+    (VP (VBZ is)
+      (NP-PRD (NNP Lisa) ))
+    (. .) )
+
+populates the current node with C<tag> C<S> and the C<children> field
+with new objects (C<tag> C<NP>, C<tag> C<VP>, and C<tag> C<.>). This
+method recurses on C<new> and C<from_penn_string> to do its job.
+
+=back
+
+=head2 simple attributes
 
 =over
 
@@ -937,48 +967,89 @@ TO DO: example here.
 
 =item annot
 
-whatever comes after the hyphen in the constituent label. tag
+Returns whatever comes after the hyphen in the constituent label.
 
 =item word
 
 If this constituent is terminal, then C<word> should contain the
 lexical item that is represented.
 
+=item parent
+
+Returns the parent of the current node.
+
 =item children
 
-returns a reference to an array of C<Lingua::Treebank::Const> objects
+Returns a reference to an array of C<Lingua::Treebank::Const> objects
 that are the children of the current node.
 
 Currently does not check whether C<word> is populated.
 
+=back
+
+=head2 methods about parentage
+
+These methods ask questions about the dominating ancestors and direct
+children of the current node. Think of them as navigating up-and-down
+the tree.
+
+=over
+
 =item is_terminal
 
-Return whether self is a leaf.  Does not check whether C<children> are
-populated; if automatically generated from the C<from_penn_text>
+No arguments
+
+Returns whether self is a leaf.  Does not check whether C<children>
+are populated; if automatically generated from the C<from_penn_string>
 method then this will always be correct.
 
 =item is_root
 
-Boolean. Is the instance a root node (no parents).
+No arguments. Boolean. Returns whether the instance is a root node
+(has no parents).
 
 =item root
 
-returns the root node for the instance in question (might be itself)
+No arguments.
+
+Returns the root node for the instance in question (might be itself)
 
 =item path_up_to
 
-given another node (assumed to be an ancestor of the instance),
-returns a list of all the nodes (local first) between them. Returns
-I<undefined> and C<carp>s when the given node is not an ancestor of
-the instance.
+Takes an ancestor node as argument.
+
+Returns a list of all the nodes (distal first) between the instance
+and the root.
+
+Returns I<undefined> and C<carp>s when the given node is not an
+ancestor of the instance.
+
+=item is_descendant_of
+
+Takes presumed ancestor as argument.
+
+Returns whether the ancestor is indeed an ancestor of the current
+instance.
+
+=item is_ancestor_of
+
+Takes presumed descendant as argument.
+
+Returns whether current instance is an ancestor of the presumed
+descendant.
 
 =item height
 
-What's the I<farthest> from the current node to a terminal node?
+No arguments.
+
+Returns the I<farthest> distance from the current node to a terminal
+node.
 
 =item depth
 
-what's the distance from the current node to the root?
+No arguments.
+
+Returns the distance from the instance to the root.
 
 =item depth_from
 
@@ -986,10 +1057,168 @@ what's the distance from the current node up to the node given as
 argument? (return I<undefined> if the node given is not the ancestor
 of the instance node)
 
+=back
+
+=head2 methods about siblings
+
+These methods ask questions about siblings, and left-right movement in
+the tree. Think of them as moving left-and-right around in the tree.
+
+=over
+
+=item get_index
+
+One argument (daughter).
+
+Returns the index of the daughter in the instance's C<children>
+list. Zero-based, of course.
+
+=item prev_sib
+
+=item next_sib
+
+No arguments. Returns next (or previous) sibling at the same level
+(dependent on the same parent), or the empty list if no such leaf
+exists.
+
+=item prev_leaf
+
+=item next_leaf
+
+No arguments. Returns the leaf just before (or after) any of the
+leaves of this node, or the empty list if no such leaf exists.
+
+=item left_leaf
+
+=item right_leaf
+
+No arguments. Returns leftmost (rightmost) leaf dominated by the
+instance.
+
+=item get_all_terminals
+
+No arguments.  Returns left-to-right list of all terminal nodes at or
+below the current node.
+
 =item find_common_ancestor
 
-given a second node, return the lowest ancestor they share (or
+One argument: a presumed cousin.
+
+returns the lowest ancestor the instance and the cousin share (or
 undefined if they do not share an ancestor)
+
+=back
+
+=head2 methods about structural comparison
+
+These methods are ways of exposing and comparing regions of local
+structure.
+
+=over
+
+=item equiv_to
+
+Tests whether the argument has the same structure (and words) as the
+instance. These need not be the same object, just the same tags and
+words in the same structure.
+
+=item equiv_tags
+
+=item equiv_words
+
+Handy -- and unimplemented -- shorthands for checking certain kinds of
+matching structure.
+
+=back
+
+=head2 methods about tree structure modification
+
+=over
+
+=item detach
+
+Argument is I<DAUGHTER> node.
+
+Removes the I<DAUGHTER> from the C<children> list of the current
+instance. I<DAUGHTER> node will still be a valid node, but it will no
+longer have a C<parent>; it will be a C<root>.
+
+=item prepend
+
+=item append
+
+Arguments are a I<LIST> of new daughters to be inserted at the
+beginning/end of the C<children> list.
+
+=item replace
+
+Arguments are (I<DAUGHTER>, I<LIST>).  Replaces I<DAUGHTER> with the
+elements of I<LIST> in the C<children> of the current instance.
+
+I<DAUGHTER> is now its own C<root>; see C<detach>.
+
+=item flatten
+
+pull up all terminals to be children of the instance, regardless of
+how deep they are. Re-attach them to the current node, preserving leaf
+order.
+
+  A->flatten()
+
+       /        /
+      A   ==>  A__
+     / \      /|\ \
+    X   B    C F D G
+   /|\   \
+  C F D   E
+           \
+            G
+
+=item retract
+
+pulls in and removes one non-terminal node (I<which> node is specified
+by argument), attaching its children directly to the current node,
+retaining what surface order the children originally had, e.g.:
+
+   A->retract(X)
+
+       /        /
+      A   ==>  A
+     / \      /|\
+    X   B    C D B
+   / \   \    / \ \
+  C   D   E  F   G E
+     / \
+    F   G
+
+=item detach_at
+
+Argument is I<INDEX>.  Removes the daughter at I<INDEX>.  Will C<carp>
+if there is no daughter at I<INDEX>.
+
+The daughter at I<INDEX> remains well-formed, though if you do not
+maintain your own pointer to it, it will probably be collected by
+the garbage collector.
+
+=item insert_at
+
+Arguments are I<INDEX>, I<LIST> of daughters.  I<LIST> daughters will
+be inserted beginning at position I<INDEX> of the current instances
+C<children>.
+
+=back
+
+=head2 utility methods
+
+These methods are methods that may (or not) be useful in programming
+with these objects.  These methods are used internally, but are
+exposed for the programmer who might need them.
+
+C<stringify> overloading is certainly helpful in debugging, since the perl
+debugger representation of these objects is complicated by their
+up-reference to parents.
+
+=over
 
 =item as_penn_text
 
@@ -997,6 +1226,79 @@ Returns a text string representing this constituent.
 
 B<To do: document additional parameters to this, and the possible
 effects of changing them>
+
+=item stringify
+
+This is the method called by default when the object handle is used in
+a string (see C<perldoc overload>).
+
+Depending on the value of C<$Lingua::Treebank::Const::STRINGIFY> (see
+below), the string representation of the object varies. The default
+behavior is C<as_penn_text>, above.
+
+Note that like any object-ref, copying its stringification does NOT
+work to retain all its behaviors. Nor does an identical string
+representation necessarily mean the two objects are the I<same>
+object; merely, that they have the same structure. (see C<equiv_to>).
+
+=item numerify
+
+This is the mthod called by default when the object handle is used in
+a numeric context (usually C<==> or C<!=>).
+
+Returns an integer representing the unique object. Identity on this
+method I<does> indicate identity of the objects.
+
+Rarely used in client code. The numeric inequality operators are
+unlikely to have any useful meaning on these objects, though they
+should behave consistently (you should get consistent answers given
+any two objects, regardless of methods called on those objects).
+
+=back
+
+=head1 Class variables
+
+=over
+
+=item $Lingua::Treebank::STRINGIFY
+
+Changes the default stringification of the objects. Can be set to any
+of the following three values:
+
+=over
+
+=item as_penn_text
+
+default value.
+
+e.g.
+
+  (S
+    (NP
+      (NNP Joe)
+    )
+    (VP
+      (VB likes)
+      (NP
+        (NNP Bach)
+      )
+    )
+    (. .)
+  )
+
+=item words
+
+e.g.
+
+  Joe likes Bach .
+
+=item preterm_tags
+
+e.g.,
+
+  NNP VB NNP .
+
+=back
 
 =back
 
@@ -1007,22 +1309,6 @@ check that destroy doesn't leak (undo parent links?)
 dump as latex tree
 
 read in other treebank formats (latex trees?)
-
-other methods:
-
-self->insert($child, $position)
-self->append($node)
-self->prepend($node)
-
-self->insert_before($node)  # error if node not child of self
-
-self->next_sib
-self->prev_sib
-
-
-=head2 FIXME
-
-add string overload ?
 
 =head2 EXPORT
 
@@ -1040,8 +1326,24 @@ Original version; created by h2xs 1.22 with options
   -CAX
 	Lingua::Treebank::Const
 
+=item 0.02
+
+=over
+
+=item Improved comparison code by caching numerify results.
+
+Should give minor speed improvements for data that works with the same
+tree over more than one operation. Little if any degradation (tiny
+increase in size) for those who only use each tree once.
+
+=item Improved documentation.
+
+Now lists all instance methods.  Instance method documentation also
+organized better -- now falls into categories.
+
 =back
 
+=back
 
 
 =head1 SEE ALSO
