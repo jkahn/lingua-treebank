@@ -27,6 +27,7 @@ use Text::Balanced 'extract_bracketed';
 ##################################################################
 our $INDENT_CHAR = ' ' x 4;
 our $CHILD_PROLOG = "\n";
+our $CHILD_EPILOG = "";
 our $STRINGIFY = 'as_penn_text';
 ##################################################################
 sub numerify {
@@ -583,11 +584,13 @@ sub as_penn_text {
     my $step = shift;
     my $indentChar = shift;
     my $child_prolog = shift;
+    my $child_epilog = shift;
 
     # set defaults (in case called without full specification)
     $step = 0 if not defined $step;
     $indentChar = $INDENT_CHAR if not defined $indentChar;
     $child_prolog = $CHILD_PROLOG if not defined $child_prolog;
+    $child_epilog = $CHILD_EPILOG if not defined $child_epilog;
 
     # begin composition of text
     my $label = $self->tag();
@@ -606,7 +609,8 @@ sub as_penn_text {
 	foreach my  __PACKAGE__ $d ( @{$self->children} ) {
 	    $text .= $child_prolog;
 	    $text .= ($indentChar x ($step + 1));
-	    $text .= $d->as_penn_text($step + 1, $indentChar, $child_prolog);
+	    $text .= $d->as_penn_text($step + 1, $indentChar, $child_prolog, $child_epilog);
+	    $text .= $child_epilog;
 	}
     }
 
@@ -818,6 +822,21 @@ sub replace {
     $self->detach_at($index);
 
     $self->insert_at($index, @replacements);
+}
+##################################################################
+sub wither {
+    my __PACKAGE__ $self = shift;
+    return if $self->is_root();
+
+    my __PACKAGE__ $parent =  $self->parent();
+
+    my $num_sibs = $parent->num_children();
+
+    $parent->detach($self);
+    if ($num_sibs == 1) {
+	# unary parent, wither it too
+	$parent->wither();
+    }
 }
 ##################################################################
 sub detach {
@@ -1398,6 +1417,32 @@ Removes the I<DAUGHTER> from the C<children> list of the current
 instance. I<DAUGHTER> node will still be a valid node, but it will no
 longer have a C<parent>; it will be a C<root>.
 
+Note that C<detach> may leave a degenerate tree: it may have no
+terminal node (one with words) at the end of a branch. To avoid this,
+use C<wither> instead.
+
+=item wither
+
+No arguments.
+
+Detaches self from parent. self will become an independent root.  If
+the parent has no other children, will recursively call
+C<parent->wither>, making a possibly zero-length list of degenerate roots
+above it until an ancestor has a different child than the one in this
+line of descent.
+
+         A                   A
+        / \    	     C   B   |
+       B   X   	    / \      X
+      /     \   => D   E     |
+     C       Y 	             Y
+    / \
+   D   E
+           Before    After
+
+        calling C->wither()
+
+
 =item prepend
 
 =item append
@@ -1482,6 +1527,17 @@ Returns a text string representing this constituent.
 B<To do: document additional parameters to this, and the possible
 effects of changing them>
 
+=over
+
+=item C<$Lingua::Treebank::Const::CHILD_PROLOG>
+
+=item C<$Lingua::Treebank::Const::INDENT_CHAR>
+
+=item C<$Lingua::Treebank::Const::CHILD_EPILOG>
+
+
+=back
+
 =item stringify
 
 This is the method called by default when the object handle is used in
@@ -1546,7 +1602,7 @@ value of C<$Lingua::Treebank::Const::BF_TRAVERSAL>, which is C<undef>
       my ($self, $state) = @_;
       return unless $self->tag() eq 'NP';
 
-      # just print it 
+      # just print it
       print scalar @{$self->children}, "\n";
 
       # or store it in the state variable
