@@ -22,6 +22,7 @@ use overload
   fallback => 1, # numeric tests measure memory location
   ;
 use Text::Balanced 'extract_bracketed';
+use Lingua::Treebank;
 ##################################################################
 our $INDENT_CHAR = ' ' x 4;
 our $CHILD_PROLOG = "\n";
@@ -520,7 +521,7 @@ sub from_penn_string {
 	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
-	    my __PACKAGE__ $child = __PACKAGE__->new();
+	    my $child = $Lingua::Treebank::CONST_PACKAGE->new();
 	    $child->from_penn_string($childtext);
 
 	    $self->append($child);
@@ -871,7 +872,7 @@ Lingua::Treebank::Const - Object modeling constituent from a treebank
     (. .) )
   TREE
 
-  my $utt = Lingua::Treebank::Const->new->from_penn_text($text)
+  my $utt = Lingua::Treebank::Const->new->from_penn_string($text)
 
   print $utt->as_penn_text(), "\n";;
 
@@ -917,7 +918,7 @@ C<A>.
 =item new
 
 Constructs a new (uninitialized) token.  If starting from text, can be
-used together with the C<from_penn_text> initialization method, as
+used together with the C<from_penn_string> initialization method, as
 below:
 
   my $text = <<EOTREE
