@@ -16,7 +16,7 @@ BEGIN { use_ok('Lingua::Treebank') };
 
 my @utts = Lingua::Treebank->from_penn_fh(*DATA);
 
-ok(defined @utts, "successfully read in!");
+ok(@utts > 0, "successfully read in!");
 
 cmp_ok(scalar @utts, '==', 335);
 
