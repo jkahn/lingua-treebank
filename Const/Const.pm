@@ -5,7 +5,8 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
+our $VERBOSE = $Lingua::Treebank::VERBOSE;
 ##################################################################
 use constant {
     TAG      => 1,
@@ -489,8 +490,14 @@ sub from_penn_string {
     # JGK: modify this to call extract_bracketed immediately?
     # how does this cope with broken data?
 
+    # strip off front and back parens and whitespace
+    $text =~ s/^ \s* \( \s* //x;
+    $text =~ s/ \s* \) \s* $//x;
+
+    # tag is everything up to the first whitespace or
+    # parenthesis. Children are everything else.
     my ($tag, $childrentext) =
-      ($text =~ /^ \s* \( ( [\S]* ) \s (.*\S) \s* \) \s* $/sx);
+      ($text =~ /^ ([^\s\(]*)  \s* (.*) $/sx);
 
     if (not defined $tag or not defined $childrentext) {
 	croak "couldn't find a constituent in '$text'";
@@ -499,9 +506,9 @@ sub from_penn_string {
 
     if ($tag =~ m/ ^ ( [^-]+? ) ([-=]) ( .* ) $/x ) {
 	my $short_tag = $1;
-	if ($2 eq '=') {
-	    warn "found '=' (should be '-') separating annotation ".
-	      "in tag $tag\n";
+	if ($2 ne '-') {
+	    warn "found '$2' (should be '-') separating annotation ".
+	      "in tag $tag\n" if $VERBOSE;
 	}
 	$self->annot( $3 );
 	$self->tag( $short_tag );
@@ -1340,6 +1347,25 @@ increase in size) for those who only use each tree once.
 
 Now lists all instance methods.  Instance method documentation also
 organized better -- now falls into categories.
+
+=back
+
+=item 0.03
+
+=over
+
+=item new interface variable
+
+added $VERBOSE variable for suppressing non-fatal errors.
+
+=item improved parsing
+
+now copes with examples like (e.g.):
+
+  ((FRAG (FOO bar))
+
+critically, earlier versions failed when the tag was empty and not
+followed by whitespace
 
 =back
 
