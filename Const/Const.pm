@@ -507,6 +507,14 @@ sub from_penn_string {
 		if defined $self->word;
 	}
 	else {
+	    if ($@) {
+		my $err2skip = 'Did not find opening bracket after prefix';
+
+		unless ($@->{error} =~ /^$err2skip/) {
+		    carp "Text::Balanced said: $@->{error}",
+		      " at position $@->{pos} of string '$childrentext'";
+		}
+	    }
 	    if ($childrentext =~ tr {()} {()} ) {
 		carp "found a parenthesis in word '$childrentext'; ",
 		  " this suggests that the data had unbalanced parens";

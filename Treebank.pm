@@ -62,6 +62,11 @@ sub from_penn_fh {
 
 	($token, $rawTrees) = extract_bracketed($rawTrees, '()');
 
+	if (defined $@) {
+	    croak "Text::Balanced said: $@->{error} at $@->{pos} in string ",
+	      cite_warning ($rawTrees);
+	}
+
 	if (length $token) {
 	    my $utt = Lingua::Treebank::Const->new->from_penn_string($token);
 	    if (defined $utt) {
