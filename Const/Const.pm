@@ -8,9 +8,9 @@ use Carp;
 our $VERSION = '0.01';
 ##################################################################
 use Class::Struct;
-struct ( tag      => '$', # e.g. "NP"
+struct ( tag      => '$', # e.g. "NP" ( from '(NP-SUBJ John)' )
 	 annot    => '$', # e.g. "SUBJ"
-	 word     => '$', # e.g. "John" -- terminal only
+	 word     => '$', # e.g. "John"
 	 parent   => __PACKAGE__,  # back-pointer up tree
 	 children => '@' );
 use Text::Balanced 'extract_bracketed';
@@ -22,15 +22,15 @@ sub find_common_ancestor {
 
     # returns lowest common ancestor, or undef if there is none.
 
-    my $self = shift;
-    my $cousin = shift;
+    my __PACKAGE__ $self = shift;
+    my __PACKAGE__ $cousin = shift;
 
     # error checking
     croak "cousin arg not defined" if not defined $cousin;
     croak "cousin not a " . __PACKAGE__
       unless UNIVERSAL::isa($cousin, __PACKAGE__);
 
-    my $matriarch = $self->root();
+    my __PACKAGE__ $matriarch = $self->root();
     if ( $cousin->root() != $matriarch ) {
 	return; # no common ancestor
     }
@@ -39,8 +39,8 @@ sub find_common_ancestor {
     my @cousin_lineage = $cousin->path_up_to( $matriarch );
 
     while (@self_lineage and @cousin_lineage) {
-	my $self_gramma   = pop @self_lineage;
-	my $cousin_gramma = pop @cousin_lineage;
+	my __PACKAGE__ $self_gramma   = pop @self_lineage;
+	my __PACKAGE__ $cousin_gramma = pop @cousin_lineage;
 	if ($self_gramma == $cousin_gramma) {
 	    $matriarch = $self_gramma;
 	}
@@ -60,7 +60,7 @@ sub depth_from {
     # return depth from given target. returns undef if $target is not
     # the ancestor of $self
 
-    my $self   = shift;
+    my __PACKAGE__ $self   = shift;
     my __PACKAGE__ $target = shift;
 
     if ($self == $target) {
@@ -81,26 +81,30 @@ sub depth {
 
     # returns how many steps from self up to root
 
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
 
     # implemented using more general function -- but it does require
     # two traversals of the tree... other implementations may be easier
     return $self->depth_from( $self->root() );
+
+# if benchmarking turns up a problem here, use one of these below
+# instead (probably the second, since it involves the fewest stack ops
+# and so is probably the fastest).
 
 # simple recursive implementation
 #      if ( $self->is_root() ) {
 #  	return 0;
 #      }
 #      else {
-#  	return $self->{parent}->depth() + 1;
+#  	return $self->parent->depth() + 1;
 #      }
 
 # non-recursive implementation
 #      my $d = 0;
-#      my $p = $self->{parent};
+#      my __PACKAGE__ $p = $self->parent;
 #      while (defined $p) {
 #  	$h++;
-#  	$p = $p->{parent};
+#  	$p = $p->parent;
 #      }
 #      return $d;
 
@@ -111,7 +115,7 @@ sub height {
 
     # could be re-implemented with get_all_terminals, path_up_to and
     # array lengths, but that seems unnecessary
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
 
     if ($self->is_terminal()) {
 	return 0;
@@ -121,8 +125,8 @@ sub height {
 
 	# choose the largest height among the children, return that
 	# (+1)
-	foreach (@{$self->children()}) {
-	    my $this_height = $_->height();
+	foreach my __PACKAGE__ $d (@{$self->children()}) {
+	    my $this_height = $d->height();
 	    if ($max < $this_height) {
 		$max = $this_height;
 	    }
@@ -132,7 +136,7 @@ sub height {
 }
 ##################################################################
 sub get_index {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     my __PACKAGE__ $daughter = shift;
 
     if ($self->is_terminal) {
@@ -160,8 +164,8 @@ sub get_index {
 # node retrieval functions
 ##################################################################
 sub path_up_to {
-    my $self = shift;
-    my $terminus = shift;
+    my __PACKAGE__ $self = shift;
+    my __PACKAGE__ $terminus = shift;
 
     # could be done non-recursively, but this is grammatical structure
     # -- very small heights.  Besides, recursivity is cooler, and
@@ -187,7 +191,7 @@ sub path_up_to {
 ##################################################################
 sub root {
     # returns the root of a given node
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     if ($self->is_root()) {
 	return $self;
     }
@@ -199,7 +203,7 @@ sub root {
 sub get_all_terminals {
     # returns all leaves in a left-right traversal
 
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
 
     my @terminals;
 
@@ -207,19 +211,19 @@ sub get_all_terminals {
 	@terminals = ( $self ); # parens force list return
     }
     else {
-	foreach ( @{$self->children} ) {
-	    push @terminals, $_->get_all_terminals;
+	foreach my __PACKAGE__ $d ( @{$self->children} ) {
+	    push @terminals, $d->get_all_terminals;
 	}
     }
     return @terminals;
 }
 ##################################################################
 sub next_sib {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
 
     return if $self->is_root; # no sib, return undef
 
-    my $parent = $self->parent;
+    my __PACKAGE__ $parent = $self->parent;
 
     my $index = $parent->get_index($self);
 
@@ -231,11 +235,11 @@ sub next_sib {
 }
 ##################################################################
 sub prev_sib {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
 
     return if $self->is_root; # no sib, return undef
 
-    my $parent = $self->parent;
+    my __PACKAGE__ $parent = $self->parent;
 
     my $index = $parent->get_index($self);
 
@@ -247,27 +251,27 @@ sub prev_sib {
 }
 ##################################################################
 sub right_leaf {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     # returns rightmost leaf of current node
 
     if ($self->is_terminal) {
 	return $self;
     }
     else {
-	my $right_daughter = $self->children(-1);
+	my __PACKAGE__ $right_daughter = $self->children(-1);
 	return $right_daughter->right_leaf();
     }
 }
 ##################################################################
 sub left_leaf {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     # returns leftmost leaf of current node
 
     if ($self->is_terminal) {
 	return $self;
     }
     else {
-	my $left_daughter = $self->children(0);
+	my __PACKAGE__ $left_daughter = $self->children(0);
 	return $left_daughter->left_leaf();
     }
 }
@@ -278,9 +282,9 @@ sub prev_leaf {
 
     # should behave correctly even when called on a non-terminal --
     # returns the first leaf to the left not-dominated by the current
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
 
-    my $left_sib = $self->prev_sib;
+    my __PACKAGE__ $left_sib = $self->prev_sib;
 
     if (defined $left_sib) {
 	return $left_sib->right_leaf();
@@ -302,9 +306,9 @@ sub next_leaf {
 
     # should behave correctly even when called on a non-terminal --
     # returns the first leaf to the right not-dominated by the current
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
 
-    my $right_sib = $self->next_sib;
+    my __PACKAGE__ $right_sib = $self->next_sib;
 
     if (defined $right_sib) {
 	return $right_sib->left_leaf();
@@ -324,8 +328,8 @@ sub next_leaf {
 # boolean requests (one additional argument)
 ##################################################################
 sub is_descendant_of {
-    my $self = shift;
-    my $grandma = shift;
+    my __PACKAGE__ $self = shift;
+    my __PACKAGE__ $grandma = shift;
 
     if ($self->is_root) {
 	return 0; # root is descendant of nobody, grandma or otherwise
@@ -339,15 +343,15 @@ sub is_descendant_of {
 }
 ##################################################################
 sub is_ancestor_of {
-    my $self = shift;
-    my $candidate = shift;
+    my __PACKAGE__ $self = shift;
+    my __PACKAGE__ $candidate = shift;
     return $candidate->is_descendant_of($self);
 }
 ##################################################################
 # I/O methods (to/from text)
 ##################################################################
 sub as_penn_text {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     my $step = shift;
     my $indentChar = shift;
     my $child_prolog = shift;
@@ -366,10 +370,10 @@ sub as_penn_text {
     else {
 	# non-terminal
 
-	foreach (@{$self->children}) {
+	foreach my  __PACKAGE__ $d ( @{$self->children} ) {
 	    $text .= $child_prolog;
 	    $text .= ($indentChar x $step);
-	    $text .= $_->as_penn_text($step + 1, $indentChar, $child_prolog);
+	    $text .= $d->as_penn_text($step + 1, $indentChar, $child_prolog);
 	}
     }
 
@@ -379,7 +383,7 @@ sub as_penn_text {
 }
 ##################################################################
 sub from_penn_string {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     my $text = shift;
     # pass it a complete constituent in text form.
 
@@ -405,7 +409,7 @@ sub from_penn_string {
 	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
-	    my $child =
+	    my __PACKAGE__ $child =
 	      __PACKAGE__->new->from_penn_string($childtext);
 
 	    $self->append($child);
@@ -444,7 +448,7 @@ sub flatten {
     #          \
     #           G
 
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
 
     if ($self->is_terminal) {
 	carp "flatten called on terminal node";
@@ -487,21 +491,21 @@ sub retract {
     #    / \
     #   F   G
 
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     my __PACKAGE__ $daughter = shift;
 
-    if ($daughter->parent != $self) {
+    if ( $daughter->parent() != $self ) {
 	carp "argument daughter does not claim instance as mother,",
 	  " can't retract!";
 	return;
     }
 
-    if ($daughter->is_terminal) {
+    if ( $daughter->is_terminal() ) {
 	carp "daughter is a terminal node, can't retract!";
 	return;
     }
 
-    $self->replace($daughter, @{$daughter->children});
+    $self->replace( $daughter, @{$daughter->children} );
 
     return $self;
 
@@ -509,8 +513,8 @@ sub retract {
 ##################################################################
 sub replace {
     # replace target arg with replacement list
-    my $self         = shift;
-    my $target       = shift;
+    my __PACKAGE__ $self         = shift;
+    my __PACKAGE__ $target       = shift;
     my @replacements = @_;
 
     carp "argument not a child of instance, can't replace!"
@@ -525,9 +529,8 @@ sub replace {
 ##################################################################
 sub detach {
     # removes an entire subtree.
-    my $self = shift;
-
-    my $daughter = shift;
+    my __PACKAGE__ $self = shift;
+    my __PACKAGE__ $daughter = shift;
 
     # actually do the detachment
     my $index = $self->get_index($daughter);
@@ -538,14 +541,14 @@ sub detach {
 ##################################################################
 sub detach_at {
     # remove one daughter node at index
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     my $index = shift;
 
     if (not defined $index) {
 	croak "no index provided to detach_at method";
     }
 
-    my $d = $self->children($index);
+    my __PACKAGE__ $d = $self->children($index);
 
     if (not defined $d) {
 	carp "no daughter at index $index";
@@ -558,19 +561,19 @@ sub detach_at {
 }
 ##################################################################
 sub prepend {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     my @daughters = @_;
     $self->insert_at(0, @daughters);
 }
 ##################################################################
 sub append {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     my @daughters = @_;
     $self->insert_at(@{$self->children}, @daughters);
 }
 ##################################################################
 sub insert_at {
-    my $self     = shift;
+    my __PACKAGE__ $self     = shift;
     my $position = shift;
     my @daughters = @_;
 
@@ -585,12 +588,12 @@ sub insert_at {
 # FEATURES OF THE CURRENT NODE
 ##################################################################
 sub is_root {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     return ( not defined $self->parent );
 }
 ##################################################################
 sub is_terminal {
-    my $self = shift;
+    my __PACKAGE__ $self = shift;
     if (defined $self->word) {
 	if ( @{$self->{children}} ) {
 	    carp "how did I get children AND a word?";
@@ -692,7 +695,15 @@ Each constituent has the following methods:
 
 =item tag
 
-Records the tag of this constituent (0-domination).
+Records the tag of this constituent (0-domination).  (This is the part
+of the constituent-label before the hyphen -- after the hyphen is the
+C<annot>, not the C<tag>).
+
+TO DO: example here.
+
+=item annot
+
+whatever comes after the hyphen in the constituent label. tag
 
 =item word
 
