@@ -1,9 +1,24 @@
+# code files
+Treebank.pm
 Const/Const.pm
 Const/Makefile.PL
-Const/t/1.t
+
+# distribution files
 MANIFEST
 MANIFEST.SKIP
 Makefile.PL
 README
-Treebank.pm
+
+# Lingua::Treebank test files
 t/1.t
+t/2read.t
+
+# Lingua::Treebank::Const test files
+Const/t/01use.t
+Const/t/10iomethods.t
+Const/t/20basemethods.t
+Const/t/30querymethods.t
+Const/t/40modmethods.t
+
+
+
