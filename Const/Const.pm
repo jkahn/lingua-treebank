@@ -446,7 +446,7 @@ sub from_penn_string {
 
     $self->tag($tag);
 
-    while ($childrentext) {
+    while (length $childrentext) {
 	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
