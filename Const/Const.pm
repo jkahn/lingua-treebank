@@ -432,7 +432,7 @@ sub from_penn_string {
     # how does this cope with broken data?
 
     my ($tag, $childrentext) =
-      ($text =~ /^ \( ( [\S]* ) \s (.*\S) \s* \) $/sx);
+      ($text =~ /^ \s* \( ( [\S]* ) \s (.*\S) \s* \) \s* $/sx);
 
     if (not defined $tag or not defined $childrentext) {
 	croak "couldn't find a constituent in '$text'";
@@ -463,13 +463,13 @@ sub from_penn_string {
 		if defined $self->word;
 	}
 	else {
-	    # this is a word; we're done
-	    $self->word($childrentext);
-
 	    if ($childrentext =~ tr {()} {()} ) {
 		carp "found a parenthesis in word '$childrentext'; ",
 		  " this suggests that the data had unbalanced parens";
 	    }
+
+ 	    # this is a word; we're done
+	    $self->word($childrentext);
 
 	    # eliminate text so that we can exit the while loop
 	    $childrentext = '';
