@@ -9,7 +9,7 @@ use Carp;
 
 require Exporter;
 
-our @ISA = qw(Exporter);
+our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
 our $VERSION = '0.01';
@@ -55,11 +55,13 @@ sub from_penn_fh {
 	$rawTrees = $_ . (<$fh>);
     }
 
-    $rawTrees =~ s/^\s*//;
 
     my (@utterances);
     while ($rawTrees) {
-	my($token, $rawTrees) = extract_bracketed($rawTrees, '()');
+	my $token;
+
+	($token, $rawTrees) = extract_bracketed($rawTrees, '()');
+
 	if (length $token) {
 	    my $utt = Lingua::Treebank::Const->new->from_penn_string($token);
 	    if (defined $utt) {
@@ -78,6 +80,7 @@ sub from_penn_fh {
 	      "' remaining in filehandle ignored";
 	    last;
 	}
+	$rawTrees =~ s/^\s*//;
     }
 
     return @utterances;
