@@ -12,10 +12,10 @@ require Exporter;
 our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 our $MAX_WARN_TEXT = 100;
-
+our $VERBOSE = 1;
 ##################################################################
 use Text::Balanced 'extract_bracketed';
 use Lingua::Treebank::Const;
@@ -141,13 +141,25 @@ Lingua::Treebank - Perl extension for manipulating the Penn Treebank format
 
 =head1 DESCRIPTION
 
-TO DO.
+Almost all the interesting tree-functionality is in the
+constituent-forming package (included in this distribution, see
+L<Lingua::Treebank::Const>).
 
-=head1 To do
+=head1 Methods
 
-test cases.
+=head2 Class methods
 
-documentation
+=over
+
+=item from_penn_file
+
+given a file, open it, extract the constituents, and return the roots.
+
+=item from_penn_fh
+
+given a filehandle, extract the constituents and return the roots.
+
+=back
 
 =head2 EXPORT
 
@@ -164,9 +176,15 @@ Original version; created by h2xs 1.22 with options
   -CAX
 	Lingua::Treebank
 
+=item 0.02
+
+Improved documentation.
+
+=item 0.03
+
+added a VERBOSE variable that can be set.
+
 =back
-
-
 
 =head1 SEE ALSO
 
