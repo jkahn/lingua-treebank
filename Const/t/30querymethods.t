@@ -5,6 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
 use Test::More tests => 51;
 BEGIN { use_ok('Lingua::Treebank::Const') };
 
@@ -15,7 +16,7 @@ BEGIN { use_ok('Lingua::Treebank::Const') };
 
 use constant PACK => 'Lingua::Treebank::Const';
 my %examples;
-
+my %words;
 can_ok(PACK,
        qw{ root },
        qw{ path_up_to },
@@ -199,7 +200,7 @@ foreach ( qw{ ex30 ex31 ex32 ex33 },
     isa_ok($funky, PACK, $_);
 
     $funky->from_penn_string($examples{$_});
-    ok(1, "able to read in '$ex' string");
+    ok(1, "able to read in '$_' string");
 
     my @leaflist = $funky->get_all_terminals();
     is( $words{$_}, join (" ", map {$_->word()} @leaflist), "$_ words match");
