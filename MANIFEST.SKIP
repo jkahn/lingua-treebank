@@ -1,0 +1,6 @@
+~$
+\#$
+\bCVS\b
+\bMakefile$
+^blib/
+\bpm_to_blib$

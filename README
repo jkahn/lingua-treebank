@@ -1,0 +1,33 @@
+Lingua/Treebank version 0.01
+============================
+
+Basic system for object-based management of Penn Treebank-style data.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  Class::Struct
+  Text::Balanced
+
+These are distributed with Perl as of at least 5.008, so this will
+rarely be a problem for modern or up-to-date Perl installations.
+
+COPYRIGHT AND LICENCE
+
+Put the correct copyright and licence information here.
+
+Copyright (C) 2003 Jeremy Gillmor Kahn
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself. 
+
