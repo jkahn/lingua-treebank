@@ -4,6 +4,9 @@ use 5.008;
 use strict;
 use warnings;
 
+##################################################################
+use Carp;
+
 require Exporter;
 
 our @ISA = qw(Exporter);
@@ -11,8 +14,11 @@ our @EXPORT_OK = qw();
 our @EXPORT = qw();
 our $VERSION = '0.01';
 
+our $MAX_WARN_TEXT = 100;
+
 ##################################################################
 use Text::Balanced 'extract_bracketed';
+use Lingua::Treebank::Const;
 ##################################################################
 sub from_penn_file {
     my ($class, $file) = @_;
@@ -49,14 +55,48 @@ sub from_penn_fh {
 	$rawTrees = $_ . (<$fh>);
     }
 
+    $rawTrees =~ s/^\s*//;
+
     my (@utterances);
     while ($rawTrees) {
 	my($token, $rawTrees) = extract_bracketed($rawTrees, '()');
-	my $utt = Lingua::Treebank::Const->new->from_string($token);
-	push @utterances, $utt;
+	if (length $token) {
+	    my $utt = Lingua::Treebank::Const->new->from_penn_string($token);
+	    if (defined $utt) {
+		push @utterances, $utt;
+	    }
+	    else {
+		carp "couldn't parse '", cite_warning($token),
+		  "' remaining data '", cite_warning($rawTrees),
+		    "' in filehandle ignored";
+		last;
+	    }
+	}
+	else {
+	    # no token extractable
+	    carp "unrecognized data '", cite_warning($rawTrees),
+	      "' remaining in filehandle ignored";
+	    last;
+	}
     }
 
     return @utterances;
+}
+##################################################################
+sub cite_warning {
+    my $text = shift;
+    my $warning;
+    if (length $text > $MAX_WARN_TEXT) {
+	$warning =
+	  substr($text, 0, $MAX_WARN_TEXT / 2);
+	$warning .= ' [ ... OMITTED ... ] ';
+	$warning .=
+	  substr($text, -($MAX_WARN_TEXT / 2) );
+    }
+    else {
+	$warning = $text;
+    }
+    return $warning;
 }
 ##################################################################
 1;
