@@ -122,17 +122,12 @@ Lingua::Treebank - Perl extension for manipulating the Penn Treebank format
     foreach ($_->get_all_terminals) {
       # $_ is a Lingua::Treebank::Const that is a terminal (word)
 
-      print $_->word;
-      print (join ' ', $_->all_tags);
-      print "\n";
-
+      print $_->word(), ' ' $_->tag(), "\n";
     }
 
     print "\n\n";
 
   }
-
-
 
 =head1 ABSTRACT
 
