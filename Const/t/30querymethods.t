@@ -6,7 +6,7 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use strict;
-use Test::More tests => 51;
+use Test::More tests => 61;
 BEGIN { use_ok('Lingua::Treebank::Const') };
 
 #########################
@@ -192,7 +192,7 @@ $examples{ex45} = <<EOEX45;
 EOEX45
 $words{ex45} = "I think 0 there really is *?* . E_S";
 
-#22->51 (10 ex * 3 tests each)
+#22->61 (10 ex * 3 tests each)
 foreach ( qw{ ex30 ex31 ex32 ex33 },
 	  qw{ ex40 ex41 ex42 ex43 ex44 ex45 } ) {
     my $funky = PACK->new();
@@ -205,6 +205,7 @@ foreach ( qw{ ex30 ex31 ex32 ex33 },
     my @leaflist = $funky->get_all_terminals();
     is( $words{$_}, join (" ", map {$_->word()} @leaflist), "$_ words match");
 
+    is($words{$_}, $funky->text(), "$_ text match");
 }
 
 
