@@ -1,0 +1,20 @@
+Bug 1
+-----
+
+How should empty trees be handled?  Currently, the following code throws
+an error when we try to print $s.
+
+   use Lingua::Treebank::Const;
+   my $s = Lingua::Treebank::Const->new->from_penn_string('()');
+   print $s;
+
+The problem is that the is_terminal function called by stringify
+throws an error for nodes that contain neither words nor children.
+(You'll see the same error for a tree like '(TAG )'.)
+
+Effectively, trees like '()' and '(TAG)' are ill-formed, even though
+it's possible to create them by withering non-branching trees.  Is
+this the desired behavior?  If not, stringify and is_terminal and
+other functions should handle empty trees properly.  If so, the code
+should raise and exception as soon as an empty tree is created, so
+that it can be handled by the caller in a systematic way.

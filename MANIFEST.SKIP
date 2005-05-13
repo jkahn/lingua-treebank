@@ -8,3 +8,4 @@ ssli-configure$
 ^blib/
 \bpm_to_blib$
 .cvsignore$
+bugs
