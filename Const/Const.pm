@@ -1084,6 +1084,11 @@ sub word {
     }
 }
 ##################################################################
+sub text {
+    my __PACKAGE__ $self = shift;
+    return join(" ", map {$_->word()} $self->get_all_terminals());
+}
+##################################################################
 sub new {
     my $class = shift;
     my %args = @_;
@@ -1121,7 +1126,7 @@ Lingua::Treebank::Const - Object modeling constituent from a treebank
     (. .) )
   TREE
 
-  my $utt = Lingua::Treebank::Const->new->from_penn_text($text)
+  my $utt = Lingua::Treebank::Const->new->from_penn_string($text)
 
   print $utt->as_penn_text(), "\n";;
 
@@ -1167,7 +1172,7 @@ C<A>.
 =item new
 
 Constructs a new (uninitialized) token.  If starting from text, can be
-used together with the C<from_penn_text> initialization method, as
+used together with the C<from_penn_string> initialization method, as
 below:
 
   my $text = <<EOTREE
@@ -1230,6 +1235,13 @@ Returns whatever comes after the hyphen in the constituent label.
 
 If this constituent is terminal, then C<word> should contain the
 lexical item that is represented.
+
+=item text
+
+A string containing the word values of the terminal nodes donminated
+by this constituent.  For example, calling text on a node created from
+the Penn text given in the description of the new function returns the
+string "this is lisa .".
 
 =item parent
 
