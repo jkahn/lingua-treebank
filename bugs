@@ -1,6 +1,8 @@
 Bug 1
 -----
 
+Opened by: Bill McNeill, 13 May 2005
+
 How should empty trees be handled?  Currently, the following code throws
 an error when we try to print $s.
 
