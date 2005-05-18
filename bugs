@@ -20,3 +20,37 @@ this the desired behavior?  If not, stringify and is_terminal and
 other functions should handle empty trees properly.  If so, the code
 should raise and exception as soon as an empty tree is created, so
 that it can be handled by the caller in a systematic way.
+
+
+
+Bug 2
+-----
+
+Opened by: Bill McNeill, 18 May 2005
+
+Lingua::Treebank::Const->is_empty_root() returns false for empty roots
+with more than one child.  Is this the desired behavior?  For example,
+it does not detect the following parse (from sw2433.mrg) as having an
+empty root
+
+( (S 
+    (NP-SBJ 
+      (TYPO (EX There) ))
+    (NP-PRD 
+      (NP (DT some) (NNS things) )
+      (SBAR 
+        (WHNP-2 (-NONE- 0) )
+        (S 
+          (NP-SBJ-1 (PRP I) )
+          (VP (MD 'd) 
+            (VP (VB like) 
+              (S 
+                (NP-SBJ (-NONE- *-1) )
+                (VP (TO to) 
+                  (VP (VB try) 
+                    (NP (-NONE- *T*-2) ))))))))))
+  (, ,) (-DFL- E_S) )
+
+because the empty top level has two children: S and ,.
+
+Maybe is_empty_root() should raise an exception in cases like this.
