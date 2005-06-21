@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 
 use Lingua::Treebank;
-our $VERSION = '0.03';
+our $VERSION = '0.09';
 our $VERBOSE = $Lingua::Treebank::VERBOSE;
 our $BF_TRAVERSAL;
 ##################################################################
@@ -23,7 +23,7 @@ use overload
   '0+'     => \&numerify, # find location in memory
   fallback => 1, # numeric tests measure memory location
   ;
-use Text::Balanced 'extract_bracketed';
+# use Text::Balanced 'extract_bracketed';
 ##################################################################
 our $INDENT_CHAR = ' ' x 4;
 our $CHILD_PROLOG = "\n";
@@ -35,7 +35,8 @@ sub numerify {
     if (not defined $self->[NUM]) {
 	# fetch out the number indicating the location in memory
 	my $refstr= overload::StrVal( $self );
-	if ($refstr =~ /\( 0x ([0-9a-fA-F]+) \) $/x) {
+	if ($refstr =~ m{\( 0x ([0-9a-fA-F]+) \) $}x) { #
+            # }
 	    # cache it for later to save the regex
 	    $self->[NUM] = hex $1;
 	}
@@ -63,6 +64,104 @@ sub stringify {
     }
 }
 
+##################################################################
+sub edges {
+    my $self = shift;
+    return
+      map { join ',', @{$_} }
+	$self->edges_data(@_);
+}
+sub edges_data {
+    my $self = shift;
+    my (%args) = @_;
+    my %ignore;
+    my $do_terminal =
+      (defined $args{'keepterminal'} ? $args{'keepterminal'} : 1);
+    if (defined $args{ignore}) {
+	%ignore = map {$_ => 1} @{$args{ignore}};
+    }
+    my %coindex;
+    %coindex = %{$args{coindex}} if defined $args{coindex};
+
+    my (@edges) = $self->_edges_driver(0);
+    my (@returns);
+    for (@edges) {
+	next if $ignore{$_->[0]};
+
+	next if (not $do_terminal and $_->[0] =~ /::/);
+
+	$_->[1] = $coindex{$_->[1]} if defined $coindex{$_->[1]};
+	$_->[2] = $coindex{$_->[2]} if defined $coindex{$_->[2]};
+	push @returns, $_;
+    }
+    return @returns;
+}
+sub _edges_driver {
+    my $self = shift;
+    my $start_index = shift;
+
+    if ($self->is_terminal()) {
+	return ([$self->tag() . '::' . $self->word(),
+		 $start_index,
+		 $start_index + 1]);
+    }
+    my @edges;
+    my $l_idx = $start_index;
+    for (@{$self->children()}) {
+       push @edges, $_->_edges_driver($l_idx);
+       $l_idx = $edges[-1][-1];
+    }
+
+    # don't forget the edge for myself
+    push @edges, [$self->tag(), $start_index, $l_idx];
+    return @edges;
+}
+##################################################################
+sub shared_edges {
+    my $self = shift;
+    my $other = shift;
+    my %args = @_;
+
+    my %is_phantom = map {$_ => 1} @{$args{phantom}};
+
+    my %coindex; # those trees that need coindexation
+    if (scalar keys %is_phantom) {
+	for ($self->edges_data(%args)) {
+	    if ($is_phantom{$_->[0]}) {
+		$coindex{$_->[1]} = $_->[2];
+	    }
+	}
+    }
+
+    my %edges;
+    for ($self->edges(%args, coindex => \%coindex)) {
+	$edges{$_}++;
+    }
+    my %other_edges;
+    for ($other->edges(%args, coindex => \%coindex)) {
+	$other_edges{$_}++;
+    }
+    use List::Util 'min';
+    my @to_return;
+    for (keys %edges) {
+	push @to_return, ($_) x min ($edges{$_} || 0, $other_edges{$_} || 0);
+    }
+    return @to_return;
+}
+##################################################################
+sub list_constituents {
+    my $self = shift;
+    if ($self->is_terminal()) {
+	return ($self);
+    }
+    else {
+	my @list;
+	for (@{$self->children()}) {
+	    push @list, $_->list_constituents();
+	}
+	return $self, @list;
+    }
+}
 ##################################################################
 # High-power generic function for crawling the tree. Most of the other
 # functions could probably be implemented in terms of this one.
@@ -532,11 +631,11 @@ sub is_descendant_of {
     my __PACKAGE__ $self = shift;
     my __PACKAGE__ $grandma = shift;
 
-    if ($self->is_root) {
-	return 0; # root is descendant of nobody, grandma or otherwise
-    }
     if ($self == $grandma) {
 	return 1; # yes, you are your own descendant. :p
+    }
+    if ($self->is_root) {
+	return 0; # root is descendant of nobody, grandma or otherwise
     }
     else {
 	return $self->parent->is_descendant_of($grandma);
@@ -632,7 +731,7 @@ sub from_cnf_string {
 	while (length $_) {
 	    my $childtext;
 	    if ( /^\(/ ) {
-		$childtext = extract_bracketed($_, "()");
+ 		$childtext = extract_bracketed($_, "()");
 		# BUGBUG check for errors here?
 	    }
 	    else {
@@ -702,7 +801,8 @@ sub from_penn_string {
 	$self->tag($tag);
     }
     while (length $childrentext) {
-	my $childtext = extract_bracketed($childrentext, '()');
+	my $childtext = $class->find_brackets($childrentext);
+#	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
 	    my __PACKAGE__ $child = $class->new();
@@ -712,6 +812,10 @@ sub from_penn_string {
 
 #  	    $child->parent($self);
 #  	    push @{$self->children}, $child;
+
+	    # chop out the childrentext
+	    substr ($childrentext, 0, length $childtext) = "";
+	    $childrentext =~ s/^\s+//;
 
 	    warn "trouble -- child constituent found " .
 	      "in token that already had word\n"
@@ -745,6 +849,44 @@ sub from_penn_string {
 
     return $self;
 }
+my $bracket_error;
+sub find_brackets {
+    my $class = shift;
+    my $text = shift;
+    my $count_l = 1;
+
+    my $posn = -1;
+
+    my $nextL = index $text, '(', $posn+1;
+    my $nextR = index $text, ')', $posn+1;
+
+    croak if $nextR < $nextL;
+    return if ($nextL==-1 and $nextR==-1);
+
+    $posn=$nextL;
+
+    if ($posn == -1) {
+	# undefined
+	return;
+    }
+
+    while ($count_l > 0) {
+	$nextL=index $text, '(', $posn+1;
+	$nextR=index $text, ')', $posn+1;
+	if ($nextR == -1) {
+	    croak "missing close parens in $text";
+	}
+	if ($nextL == -1 or $nextR < $nextL) {
+	    $count_l--;
+	    $posn=$nextR;
+	}
+	else { # ($nextL < $nextR)
+	    $count_l++;
+	    $posn = $nextL;
+	}
+    }
+    return substr $text, 0, $posn+1;
+}
 ##################################################################
 # Tree modification methods
 ##################################################################
@@ -761,7 +903,7 @@ sub flatten {
 	return;
     }
 
-    foreach my __PACKAGE__ $daughter (@$self->children) {
+    foreach my __PACKAGE__ $daughter (@{$self->children}) {
 
 	next if $daughter->is_terminal; # this child's done
 
@@ -1761,6 +1903,28 @@ followed by whitespace
 =item new interface variable
 
 added $BF_TRAVERSAL for changing walk() method defaults
+
+=item 0.09
+
+=over
+
+=item added new methods
+
+TODO: document these, add test cases, update version number 
+
+=over
+
+=item edges
+
+now with new ignore feature!
+
+=item shared_edges
+
+=item list_constituents
+
+=back
+
+=back
 
 =back
 

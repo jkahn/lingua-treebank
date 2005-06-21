@@ -12,7 +12,7 @@ require Exporter;
 our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
-our $VERSION = '0.03';
+our $VERSION = '0.09';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
@@ -64,16 +64,19 @@ sub from_penn_fh {
 
     my (@utterances);
     while ($rawTrees) {
-	my $token;
+	$rawTrees =~ s/^\s+//;
+	my $token = Lingua::Treebank::Const->find_brackets($rawTrees);
 
-	($token, $rawTrees) = extract_bracketed($rawTrees, '()');
+# 	if (defined $@) {
+# 	    croak "Text::Balanced said: $@->{error} at $@->{pos} in string ",
+# 	      cite_warning ($rawTrees);
+# 	}
 
-	if (defined $@) {
-	    croak "Text::Balanced said: $@->{error} at $@->{pos} in string ",
-	      cite_warning ($rawTrees);
-	}
+	if (defined $token) {
+	    substr ($rawTrees, 0, length $token) = '';
 
-	if (length $token) {
+	    $rawTrees =~ s/^\s+//;
+
 	    my $utt = $CONST_CLASS->new->from_penn_string($token);
 	    if (defined $utt) {
 		push @utterances, $utt;
@@ -86,6 +89,7 @@ sub from_penn_fh {
 	    }
 	}
 	else {
+	    
 	    # no token extractable
 	    carp "unrecognized data '", cite_warning($rawTrees),
 	      "' remaining in filehandle ignored";

@@ -20,6 +20,16 @@ Const/t/10iomethods.t
 Const/t/20basemethods.t
 Const/t/30querymethods.t
 Const/t/40modmethods.t
+Const/t/50walking.t
+
+# scripts for general use
+scripts/get-pos
+scripts/list-edges
+scripts/list-rewrites
+scripts/tree-collapse
+scripts/tree-inflate
+scripts/vocabulary
 
 
 
+META.yml                                 Module meta-data (added by MakeMaker)
