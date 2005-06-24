@@ -23,7 +23,6 @@ use overload
   '0+'     => \&numerify, # find location in memory
   fallback => 1, # numeric tests measure memory location
   ;
-# use Text::Balanced 'extract_bracketed';
 ##################################################################
 our $INDENT_CHAR = ' ' x 4;
 our $CHILD_PROLOG = "\n";
@@ -731,16 +730,15 @@ sub from_cnf_string {
 	while (length $_) {
 	    my $childtext;
 	    if ( /^\(/ ) {
- 		$childtext = extract_bracketed($_, "()");
+ 		$childtext = $class->find_brackets($_);
+		substr ($_, 0, length $childtext) = '';
 		# BUGBUG check for errors here?
 	    }
 	    else {
 		s/^(\S+)\s*// or carp "couldn't find text in $_\n";
 		$childtext = $1;
 	    }
-	    my __PACKAGE__ $child =
-#  	      $Lingua::Treebank::CONST_CLASS->new();
-	      $class->new();
+	    my __PACKAGE__ $child = $class->new();
 	    $child->from_cnf_string($childtext);
 	    $self->append($child);
 	    s/^\s+//;
@@ -771,9 +769,6 @@ sub from_penn_string {
 #      my (@tags) = shift;
 
 
-    # JGK: modify this to call extract_bracketed immediately?
-    # how does this cope with broken data?
-
     # strip off front and back parens and whitespace
     $text =~ s/^ \s* \( \s* //x;
     $text =~ s/ \s* \) \s* $//x;
@@ -802,7 +797,6 @@ sub from_penn_string {
     }
     while (length $childrentext) {
 	my $childtext = $class->find_brackets($childrentext);
-#	my $childtext = extract_bracketed($childrentext, '()');
 	if (defined $childtext) {
 	    # child is itself a constituent
 	    my __PACKAGE__ $child = $class->new();
