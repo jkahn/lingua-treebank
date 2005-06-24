@@ -89,7 +89,6 @@ sub from_penn_fh {
 	    }
 	}
 	else {
-	    
 	    # no token extractable
 	    carp "unrecognized data '", cite_warning($rawTrees),
 	      "' remaining in filehandle ignored";
@@ -129,6 +128,8 @@ sub from_cnf_fh {
 	while (length $_) {
 	    my $text;
 	    ($text, $_) = Text::Balanced::extract_bracketed($_, '()');
+	    # Remove spaces from remaining text.
+	    s/^\s+//;
 
 	    # Did we fail to extract bracketed text?
 	    if (defined $@) {
