@@ -721,30 +721,41 @@ sub from_cnf_string {
     my __PACKAGE__ $self = shift;
     my $class = ref $self;
     local $_ = shift;
+
+    # Strip leading and trailing whitespace.
     s/^\s+//;
     s/\s+$//;
+    # Remove outermost parenthesis pair.
     if (s/^ \( \s* (.*) \s* \) $/$1/x) {
+	# This is a non-terminal node.
+	# Extract the non-terminal tag.
 	s/^(\S+)\s*//;
 	my $tag = $1;
 	$self->tag($tag);
+	# Enumerate all the children of this node.
 	while (length $_) {
 	    my $childtext;
 	    if ( /^\(/ ) {
+		# The child is a non-terminal node.
  		$childtext = $class->find_brackets($_);
 		substr ($_, 0, length $childtext) = '';
 		# BUGBUG check for errors here?
 	    }
 	    else {
+		# The child is a terminal node.
 		s/^(\S+)\s*// or carp "couldn't find text in $_\n";
 		$childtext = $1;
 	    }
+	    # Create a child node structure.
 	    my __PACKAGE__ $child = $class->new();
 	    $child->from_cnf_string($childtext);
 	    $self->append($child);
+	    # Skip whitespace delimiting children.
 	    s/^\s+//;
 	}
     }
     elsif (/^([^_]+)_(\S+)$/) {
+	# This is a terminal node.
 	my ($word, $tag) = ($1, $2);
 	$self->word($word);
 	$self->tag($tag);
