@@ -6,7 +6,6 @@ WriteMakefile(
     'NAME'		=> 'Lingua::Treebank',
     'VERSION_FROM'	=> 'Treebank.pm', # finds $VERSION
     'PREREQ_PM'		=> {
-			    Text::Balanced => '1.89',
 			   },
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM => 'Treebank.pm', # retrieve abstract from module

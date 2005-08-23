@@ -23,7 +23,7 @@ Const/t/40modmethods.t
 Const/t/50walking.t
 
 # scripts for general use
-scripts/get-pos
+scripts/get-words
 scripts/list-edges
 scripts/list-rewrites
 scripts/tree-collapse

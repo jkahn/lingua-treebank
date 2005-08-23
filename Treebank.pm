@@ -300,6 +300,11 @@ A variety of additional features
 
 more features still, also some bugfixes.
 
+=item 0.11
+
+Removed references to Text::Balanced, which is slow and not uniformly
+available.
+
 =back
 
 =head1 SEE ALSO

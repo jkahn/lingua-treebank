@@ -17,7 +17,6 @@ DEPENDENCIES
 This module requires these other modules and libraries:
 
   Class::Struct
-  Text::Balanced
 
 These are distributed with Perl as of at least 5.008, so this will
 rarely be a problem for modern or up-to-date Perl installations.
