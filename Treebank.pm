@@ -12,7 +12,7 @@ require Exporter;
 our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
-our $VERSION = '0.09';
+our $VERSION = '0.11';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
@@ -224,7 +224,7 @@ sentence "I spoke" would be rendered in each format as follows:
         (NP
             I_N)
         (VP
-            V spoke_V))
+            spoke_V))
      Chomsky Normal Form
 
 Almost all the interesting tree-functionality is in the
@@ -292,6 +292,14 @@ Improved documentation.
 
 added a VERBOSE variable that can be set.
 
+=item 0.09
+
+A variety of additional features
+
+=item 0.10
+
+more features still, also some bugfixes.
+
 =back
 
 =head1 SEE ALSO
@@ -304,7 +312,8 @@ Jeremy Gillmor Kahn, E<lt>kahn@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2003 by Jeremy Gillmor Kahn
+Copyright 2003-2005 by Jeremy Gillmor Kahn with additional support
+from Bill McNeill
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
