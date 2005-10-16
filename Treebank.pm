@@ -12,7 +12,7 @@ require Exporter;
 our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
@@ -231,6 +231,10 @@ Almost all the interesting tree-functionality is in the
 constituent-forming package (included in this distribution, see
 L<Lingua::Treebank::Const>).
 
+PLEASE NOTE: The format expected here is the C<.mrg> format, not the
+C<.psd> format.  In other words, one POS-tag per word is required. (In
+response to CPAN bug 15079.)
+
 =head1 Variables
 
 =over
@@ -304,6 +308,13 @@ more features still, also some bugfixes.
 
 Removed references to Text::Balanced, which is slow and not uniformly
 available.
+
+=item 0.12
+
+Corrected bug in Makefile.PL pointed out by Vassilii Khachuratov.
+
+Added some documentation distinguishing that .mrg (and not .psd files)
+are supported.
 
 =back
 
