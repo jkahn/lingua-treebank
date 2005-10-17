@@ -311,7 +311,7 @@ available.
 
 =item 0.12
 
-Corrected bug in Makefile.PL pointed out by Vassilii Khachuratov.
+Corrected bug in Makefile.PL pointed out by Vassilii Khachaturov.
 
 Added some documentation distinguishing that .mrg (and not .psd files)
 are supported.
