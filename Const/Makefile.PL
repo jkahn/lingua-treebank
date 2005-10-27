@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'		=> 'Lingua::Treebank::Const',
-    'VERSION_FROM'	=> 'Const.pm', # finds $VERSION
+    'VERSION_FROM'	=> '../Treebank.pm', # finds $VERSION
     'PREREQ_PM'		=> {
 			   },
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005

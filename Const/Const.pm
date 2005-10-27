@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 
 use Lingua::Treebank;
-our $VERSION = '0.09';
+our $VERSION = $Lingua::Treebank::VERSION;
 our $VERBOSE = $Lingua::Treebank::VERBOSE;
 our $BF_TRAVERSAL;
 ##################################################################

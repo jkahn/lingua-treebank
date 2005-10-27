@@ -12,7 +12,7 @@ require Exporter;
 our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
@@ -315,6 +315,13 @@ Corrected bug in Makefile.PL pointed out by Vassilii Khachaturov.
 
 Added some documentation distinguishing that .mrg (and not .psd files)
 are supported.
+
+=item 0.13
+
+C<text()> method now suppresses anything with a C<-NONE-> tag.
+
+C<$VERSION> for L<Lingua::Treebank> and L<Lingua::Treebank::Const> now
+tied.
 
 =back
 
