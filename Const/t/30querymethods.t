@@ -6,7 +6,7 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use strict;
-use Test::More tests => 61;
+use Test::More tests => 51;
 BEGIN { use_ok('Lingua::Treebank::Const') };
 
 #########################
@@ -92,14 +92,14 @@ is($string, ' Joe likes Bach .', "'Joe likes Bach .'");
 $examples{ex30} = <<EOEX30;
  (NP-PRD (-NONE- *?*) )
 EOEX30
-$words{ex30} = "*?*";
+$words{ex30} = "";
 
 $examples{ex31} = <<EOEX31;
 (SQ (VBZ is) (RB n't)
     (NP-SBJ (RB there) )
     (NP-PRD (-NONE- *?*) ) )
 EOEX31
-$words{ex31} = "is n't there *?*";
+$words{ex31} = "is n't there";
 
 $examples{ex32} = <<'EOEX32';
 (SQ
@@ -109,7 +109,7 @@ $examples{ex32} = <<'EOEX32';
     (. .) (-DFL- E_S)
 )
 EOEX32
-$words{ex32} = "is n't there *?* . E_S";
+$words{ex32} = "is n't there . E_S";
 
 $examples{ex33} = <<EOEX33;
 (SQ
@@ -126,7 +126,7 @@ $examples{ex33} = <<EOEX33;
       (NP-PRD (-NONE- *?*) ))
     (. .) (-DFL- E_S) )
 EOEX33
-$words{ex33} = "Uh , there 's really a lot , is n't there *?* . E_S";
+$words{ex33} = "Uh , there 's really a lot , is n't there . E_S";
 
 $examples{ex40} = <<EOEX40;
 (S
@@ -135,12 +135,12 @@ $examples{ex40} = <<EOEX40;
   (VP (VBZ is)
      (NP-PRD (-NONE- *?*) )))
 EOEX40
-$words{ex40} = "there really is *?*";
+$words{ex40} = "there really is";
 
 $examples{ex41} = <<EOEX41;
 (SBAR (-NONE- 0) )
 EOEX41
-$words{ex41} = "0";
+$words{ex41} = "";
 
 $examples{ex42} = <<EOEX42;
 (SBAR (-NONE- 0)
@@ -150,7 +150,7 @@ $examples{ex42} = <<EOEX42;
     (VP (VBZ is)
        (NP-PRD (-NONE- *?*) ))))
 EOEX42
-$words{ex42} = "0 there really is *?*";
+$words{ex42} = "there really is";
 
 $examples{ex43} = <<EOEX43;
 (VP (VBP think)
@@ -161,7 +161,7 @@ $examples{ex43} = <<EOEX43;
         (VP (VBZ is)
           (NP-PRD (-NONE- *?*) )))))
 EOEX43
-$words{ex43} = "think 0 there really is *?*";
+$words{ex43} = "think there really is";
 
 
 $examples{ex44} = <<EOEX44;
@@ -176,7 +176,7 @@ $examples{ex44} = <<EOEX44;
             (NP-PRD (-NONE- *?*) )))))
     (. .) (-DFL- E_S) )
 EOEX44
-$words{ex44} = "I think 0 there really is *?* . E_S";
+$words{ex44} = "I think there really is . E_S";
 
 $examples{ex45} = <<EOEX45;
 ( (S 
@@ -190,7 +190,7 @@ $examples{ex45} = <<EOEX45;
             (NP-PRD (-NONE- *?*) )))))
     (. .) (-DFL- E_S) ))
 EOEX45
-$words{ex45} = "I think 0 there really is *?* . E_S";
+$words{ex45} = "I think there really is . E_S";
 
 #22->61 (10 ex * 3 tests each)
 foreach ( qw{ ex30 ex31 ex32 ex33 },
@@ -203,9 +203,9 @@ foreach ( qw{ ex30 ex31 ex32 ex33 },
     ok(1, "able to read in '$_' string");
 
     my @leaflist = $funky->get_all_terminals();
-    is( $words{$_}, join (" ", map {$_->word()} @leaflist), "$_ words match");
+#     is( $words{$_}, join (" ", map {$_->word()} @leaflist), "$_ words match");
 
-    is($words{$_}, $funky->text(), "$_ text match");
+    is($funky->text(), $words{$_}, "$_ text match");
 }
 
 

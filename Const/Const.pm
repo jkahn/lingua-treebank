@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 
 use Lingua::Treebank;
-our $VERSION = $Lingua::Treebank::VERSION;
+our $VERSION = '0.14'; # stay in sync automatically
 our $VERBOSE = $Lingua::Treebank::VERBOSE;
 our $BF_TRAVERSAL;
 ##################################################################
@@ -1228,7 +1228,10 @@ sub word {
 ##################################################################
 sub text {
     my __PACKAGE__ $self = shift;
-    return join(" ", map {$_->word()} $self->get_all_terminals());
+    return join(" ", 
+		map {$_->word()} 
+		grep {$_->tag ne '-NONE-'}
+		$self->get_all_terminals());
 }
 ##################################################################
 sub new {

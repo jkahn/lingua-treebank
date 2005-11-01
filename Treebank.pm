@@ -12,7 +12,7 @@ require Exporter;
 our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
@@ -322,6 +322,10 @@ C<text()> method now suppresses anything with a C<-NONE-> tag.
 
 C<$VERSION> for L<Lingua::Treebank> and L<Lingua::Treebank::Const> now
 tied.
+
+=item 0.14
+
+Actually include patch intended for 0.13. *sheesh*.
 
 =back
 
