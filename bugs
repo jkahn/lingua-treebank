@@ -54,3 +54,14 @@ empty root
 because the empty top level has two children: S and ,.
 
 Maybe is_empty_root() should raise an exception in cases like this.
+
+
+
+Bug 3
+-----
+
+Opened by: Bill McNeill, 13 February 2006
+
+There should be a generic exception raising mechanism for when
+Lingua::Treebank::Const tries to parse something that isn't a Penn
+treebank string.
