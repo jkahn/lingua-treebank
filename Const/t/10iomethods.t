@@ -1,3 +1,4 @@
+# -*- perl -*-
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl 1.t'
 
@@ -5,7 +6,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 9;
+use Test::More tests => 11;
 BEGIN {
     #01
     use_ok('Lingua::Treebank::Const');
@@ -73,3 +74,14 @@ ok( ( $d->equiv_to($d2) ) , 'trees are equivalent');
 is ( $d->as_penn_text(), $d2->as_penn_text(), 'tree texts match');
 
 # diag ( $d->as_penn_text() );
+
+# parens
+my $ex3 = <<EOEX3;
+(S (NP (-LRB- ()(NNP Joe)(-RRB- )))(VP (VB likes)(NP (NNP Bach)))(. .))
+EOEX3
+my $d3 = PACK->new();
+$d3->from_penn_string($ex3);
+#10
+isa_ok($d3, PACK);
+#11
+is ($d3->as_penn_text(0, '', '', '') . "\n", $ex3, 'tree text w/ parens matches');

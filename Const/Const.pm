@@ -807,6 +807,17 @@ sub from_penn_string {
 	$self->tag($tag);
     }
     while (length $childrentext) {
+	# handle perverse cases where the brackets are the text, like
+	# (NP (-LRB- () (NNP Joe) (-RRB- )))
+	if ($childrentext =~ s/^\( (-[LR]RB-) \s+ ([()]) \)\s*//x) {
+	    my ($thistag, $thisword) = ($1, $2);
+	    my __PACKAGE__ $child = $class->new();
+	    $child->tag($thistag);
+	    $child->word($thisword);
+	    $self->append($child);
+	    next;
+	}
+
 	my $childtext = $class->find_brackets($childrentext);
 	if (defined $childtext) {
 	    # child is itself a constituent
