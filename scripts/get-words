@@ -30,7 +30,19 @@ pod2usage("$0: No files given.")  if ((@ARGV == 0) && (-t STDIN));
 use Lingua::Treebank::Const;
 
 while (<>) {
-    my $utt = Lingua::Treebank::Const->new()->from_penn_string($_);
+    # leave blank-ish lines alone
+    if (/^\s*$/) {
+	print $_;
+	next;
+    }
+    my $utt;
+    eval {
+	$utt = Lingua::Treebank::Const->new()->from_penn_string($_);
+    };
+    if ($@) {
+	die "line $.: $@\n";
+    }
+
     if (not defined $utt) {
 	warn "utterance doesn't parse at line $.\n";
     }
