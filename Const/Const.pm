@@ -784,6 +784,11 @@ sub from_penn_string {
     $text =~ s/^ \s* \( \s* //x;
     $text =~ s/ \s* \) \s* $//x;
 
+    # handle perverse cases where the brackets are the text, like
+    # (NP (-LRB- () (NNP Joe) (-RRB- )))
+    $text =~ s/\(-LRB- \(\)/__LPRN__/g;
+    $text =~ s/\(-RRB- \)\)/__RPRN__/g;
+
     # tag is everything up to the first whitespace or
     # parenthesis. Children are everything else.
     my ($tag, $childrentext) =
@@ -809,11 +814,17 @@ sub from_penn_string {
     while (length $childrentext) {
 	# handle perverse cases where the brackets are the text, like
 	# (NP (-LRB- () (NNP Joe) (-RRB- )))
-	if ($childrentext =~ s/^\( (-[LR]RB-) \s+ ([()]) \)\s*//x) {
-	    my ($thistag, $thisword) = ($1, $2);
+	if ($childrentext =~ s/^\s*__LPRN__\s*//) {
 	    my __PACKAGE__ $child = $class->new();
-	    $child->tag($thistag);
-	    $child->word($thisword);
+	    $child->tag('-LRB-');
+	    $child->word('(');
+	    $self->append($child);
+	    next;
+	}
+	elsif ($childrentext =~ s/^\s*__RPRN__\s*//) {
+	    my __PACKAGE__ $child = $class->new();
+	    $child->tag('-RRB-');
+	    $child->word(')');
 	    $self->append($child);
 	    next;
 	}
@@ -1224,7 +1235,7 @@ sub word {
 	}
 
 	if (@{$self->[CHILDREN]}) {
-	    carp "can't assign a word when children exist, ignoring!";
+	    croak "can't assign a word when children exist, failing!";
 	    return;
 	}
 
