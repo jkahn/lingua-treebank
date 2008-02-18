@@ -12,7 +12,7 @@ require Exporter;
 our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
@@ -327,6 +327,11 @@ tied.
 
 Actually include patch intended for 0.13. *sheesh*.
 
+=item 0.15
+
+Include Lingua::Treebank::HeadFinder class in distro.  Modify
+L::TB::Const to support head-child annotation.
+
 =back
 
 =head1 SEE ALSO
@@ -339,7 +344,7 @@ Jeremy Gillmor Kahn, E<lt>kahn@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2003-2005 by Jeremy Gillmor Kahn with additional support
+Copyright 2003-2008 by Jeremy Gillmor Kahn with additional support
 from Bill McNeill
 
 This library is free software; you can redistribute it and/or modify
