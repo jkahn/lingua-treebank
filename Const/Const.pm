@@ -17,6 +17,7 @@ use constant {
     PARENT   => 4,
     CHILDREN => 5,
     NUM      => 6,
+    HEADCHILD => 7, # only used after Headfinder
 };
 use overload
   '""'     => \&stringify,
@@ -1033,6 +1034,11 @@ sub detach_at {
 
     # remove links
     $d->clear_parent();
+
+    if (defined $self->headchild() and $self->headchild() == $d) {
+	$self->clear_headchild();
+    }
+
     splice @{$self->children}, $index, 1, (); # replace with empty list
 }
 ##################################################################
@@ -1169,6 +1175,46 @@ sub children {
 sub num_children {
     my $self = shift;
     return scalar @{$self->[ CHILDREN ]};
+}
+##################################################################
+sub clear_headchild {
+    my __PACKAGE__ $self = shift;
+    $self->[HEADCHILD] = undef;
+}
+##################################################################
+sub headterminal {
+    my __PACKAGE__ $self = shift;
+    if ($self->is_terminal()) {
+	return $self;
+    }
+    my $headchild = $self->headchild();
+
+    return undef if not defined $headchild;
+
+    return $headchild->headterminal();
+}
+##################################################################
+sub headchild {
+    my __PACKAGE__ $self = shift;
+    if (@_) {
+	# setting
+	if (@_ > 1) {
+	    croak "->headchild() called with >1 argument";
+	}
+	my $val = $_[0];
+	croak "->headchild() argument wrong class"
+	  if ( not UNIVERSAL::isa($val, __PACKAGE__) );
+
+	if (not grep { $val eq $_ } @{$self->[ CHILDREN ]}) {
+	    croak "->headchild() setting used value that wasn't ",
+	      "one of its kids";
+	}
+	$self->[HEADCHILD] = $val;
+    }
+    else {
+	# getting
+	return $self->[HEADCHILD];
+    }
 }
 ##################################################################
 sub parent {
