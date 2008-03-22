@@ -1177,6 +1177,25 @@ sub num_children {
     return scalar @{$self->[ CHILDREN ]};
 }
 ##################################################################
+# Functions for headed trees
+##################################################################
+sub maximal_projection {
+  # given a node (usually a leaf!) climb the tree until I'm not the
+  # headword any more
+  my __PACKAGE__ $self = shift;
+  my $maximal = $self;
+
+ CLIMB:
+  while (1) {
+    my $parent = $maximal->parent();
+    if (not defined $parent or $parent->headterminal() != $self) {
+      last CLIMB;  # done! $maximal is it
+    }
+    $maximal = $parent;
+  }
+  return $maximal;
+}
+##################################################################
 sub clear_headchild {
     my __PACKAGE__ $self = shift;
     $self->[HEADCHILD] = undef;
