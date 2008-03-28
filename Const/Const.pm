@@ -684,6 +684,7 @@ sub as_penn_text {
     my $indentChar = shift;
     my $child_prolog = shift;
     my $child_epilog = shift;
+    my $am_head = shift;
 
     # set defaults (in case called without full specification)
     $step = 0 if not defined $step;
@@ -693,6 +694,13 @@ sub as_penn_text {
 
     # begin composition of text
     my $label = $self->tag();
+    if (defined $am_head) {
+      if ($am_head) {
+	$label = '*'.$label.'*';
+      }
+    }
+    # don't touch if $am_head undef
+
     if (defined $self->annot()) {
 	$label .= '-' . $self->annot();
     }
@@ -704,13 +712,18 @@ sub as_penn_text {
     }
     else {
 	# non-terminal
-
-	foreach my  __PACKAGE__ $d ( @{$self->children} ) {
-	    $text .= $child_prolog;
-	    $text .= ($indentChar x ($step + 1));
-	    $text .= $d->as_penn_text($step + 1, $indentChar, $child_prolog, $child_epilog);
-	    $text .= $child_epilog;
+      my $head = $self->headchild();
+      
+      foreach my  __PACKAGE__ $d ( @{$self->children} ) {
+	$text .= $child_prolog;
+	$text .= ($indentChar x ($step + 1));
+	my $child_is_head;
+	if (defined $head) {
+	  $child_is_head = ($head == $d ? 1 : 0);
 	}
+	$text .= $d->as_penn_text($step + 1, $indentChar, $child_prolog, $child_epilog, $child_is_head);
+	$text .= $child_epilog;
+      }
     }
 
     $text .= ')';
@@ -1179,6 +1192,23 @@ sub num_children {
 ##################################################################
 # Functions for headed trees
 ##################################################################
+sub capitalize_headed {
+  my __PACKAGE__ $self = shift;
+  if ($self->is_terminal) {
+    return;
+  }
+  my $head = $self->headchild();
+  for my $kid (@{$self->children}) {
+    if ($kid == $head) {
+      $kid->tag(uc $kid->tag());
+    }
+    else {
+      $kid->tag(lc $kid->tag());
+    }
+    $kid->capitalize_headed();
+  }
+}
+
 sub maximal_projection {
   # given a node (usually a leaf!) climb the tree until I'm not the
   # headword any more
@@ -1224,7 +1254,7 @@ sub headchild {
 	croak "->headchild() argument wrong class"
 	  if ( not UNIVERSAL::isa($val, __PACKAGE__) );
 
-	if (not grep { $val eq $_ } @{$self->[ CHILDREN ]}) {
+	if (not grep { $val == $_ } @{$self->[ CHILDREN ]}) {
 	    croak "->headchild() setting used value that wasn't ",
 	      "one of its kids";
 	}
