@@ -32,19 +32,35 @@ our $STRINGIFY = 'as_penn_text';
 ##################################################################
 sub numerify {
     my $self = shift;
-    if (not defined $self->[NUM]) {
-	# fetch out the number indicating the location in memory
-	my $refstr= overload::StrVal( $self );
-	if ($refstr =~ m{\( 0x ([0-9a-fA-F]+) \) $}x) { #
-            # }
-	    # cache it for later to save the regex
-	    $self->[NUM] = hex $1;
-	}
-	else {
-	    confess "numerify wasn't able to extract a numeric ref";
-	}
-    }
-    return $self->[NUM];
+    my $num = $self->[NUM];
+    confess "no numeric value!?" unless defined $num;
+    return $num;
+}
+## the approach below is not portable. assign a new number from
+## $__NUMID for every constituent at new() instead.
+# sub numerify {
+#     my $self = shift;
+#     if (not defined $self->[NUM]) {
+# 	# fetch out the number indicating the location in memory
+# 	my $refstr= overload::StrVal( $self );
+# 	if ($refstr =~ m{\( 0x ([0-9a-fA-F]+) \) $}x) { #
+#             # }
+# 	    # cache it for later to save the regex
+# 	    $self->[NUM] = hex $1;
+# 	}
+# 	else {
+# 	    confess "numerify wasn't able to extract a numeric ref";
+# 	}
+#     }
+#     return $self->[NUM];
+#}
+our $__NUMID = 100;  # never be small, just to be sure
+sub _next_numid {
+  # for assigning unique numeric values to each new constituent;
+  # invoked from the ->new() method
+  my $class = shift;
+  ++$__NUMID;
+  return $__NUMID;
 }
 ##################################################################
 sub stringify {
@@ -1356,6 +1372,7 @@ sub new {
     my %args = @_;
     my $self = bless [], $class;
     $self->[CHILDREN] = [];
+    $self->[NUM] = $class->_next_numid();
     foreach (keys %args) {
 	if ($self->can($_)) {
 	    $self->$_($args{$_});
