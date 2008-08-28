@@ -5,8 +5,8 @@
 #########################
 
 # change 'tests => 1' to 'tests => last_test_to_print';
-
 use Test::More tests => 6;
+
 BEGIN {
     #01
     use_ok('Lingua::Treebank::Const');
@@ -49,8 +49,11 @@ $d->from_penn_string($ex1);
 ok(1, "passed from_penn_string");
 
 #6
-use Devel::Cycle;
-my @cycles;
-find_cycle($ex1, sub { push @cycles, @_;} );
-is(scalar @cycles, 0, "no reference cycles found");
+SKIP: {
+  eval { require Devel::Cycle; };
+  skip ("devel::cycle not installed", 1) if $@;
+  my @cycles;
+  Devel::Cycle::find_cycle($ex1, sub { push @cycles, @_;} );
+  is(scalar @cycles, 0, "no reference cycles found");
+}
 
