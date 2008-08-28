@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 
 use Lingua::Treebank;
-our $VERSION = '0.14'; # stay in sync automatically
+our $VERSION = '0.16'; # stay in sync automatically
 our $VERBOSE = $Lingua::Treebank::VERBOSE;
 our $BF_TRAVERSAL;
 ##################################################################
@@ -2062,6 +2062,10 @@ now with new ignore feature!
 =back
 
 =back
+
+=item 0.16
+
+Version number jump to keep up with Lingua::Treebank
 
 =back
 

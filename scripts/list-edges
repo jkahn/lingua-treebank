@@ -104,7 +104,7 @@ Show the manual page for this script.
 
 By default, if there is a human-operated TTY on STDIN, this script
 issues a usage message and exits (this is so users can run
-C<list-rewrites> and get the usage message).  If you really want to type
+C<list-edges> and get the usage message).  If you really want to type
 trees by hand on STDIN, add the B<--directinput> flag.
 
 =item B<--verbose>
