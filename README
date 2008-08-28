@@ -1,7 +1,7 @@
-Lingua/Treebank version 0.01
+Lingua/Treebank version 0.16
 ============================
 
-Basic system for object-based management of Penn Treebank-style data.
+System for object-based management of Penn Treebank-style data.
 
 INSTALLATION
 
@@ -16,16 +16,14 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-  Class::Struct
+ none.
 
-These are distributed with Perl as of at least 5.008, so this will
-rarely be a problem for modern or up-to-date Perl installations.
+If the Devel::Cycle module is installed, it will be used in one of the
+distribution tests.
 
 COPYRIGHT AND LICENCE
 
-Put the correct copyright and licence information here.
-
-Copyright (C) 2003 Jeremy Gillmor Kahn
+Copyright (C) 2003-2008 Jeremy Gillmor Kahn
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 
