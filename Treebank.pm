@@ -12,7 +12,7 @@ require Exporter;
 our @ISA = qw ( Exporter ) ;
 our @EXPORT_OK = qw();
 our @EXPORT = qw();
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 our $MAX_WARN_TEXT = 100;
 our $VERBOSE = 1;
@@ -332,11 +332,20 @@ Actually include patch intended for 0.13. *sheesh*.
 Include Lingua::Treebank::HeadFinder class in distro.  Modify
 L::TB::Const to support head-child annotation.
 
+also support 64-bit systems much better.
+
+=item 0.16
+
+Including data for Lingua::Treebank::HeadFinder.
+Updating version numbers in Const.pm code
+Revised test code so that it doesn't require Devel::Cycle (but uses it
+if needed).
+
 =back
 
 =head1 SEE ALSO
 
-TO DO: mention documentation of Penn Treebank
+TO DO: Where is Penn Treebank documented?
 
 =head1 AUTHOR
 
@@ -344,8 +353,8 @@ Jeremy Gillmor Kahn, E<lt>kahn@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2003-2008 by Jeremy Gillmor Kahn with additional support
-from Bill McNeill
+Copyright 2003-2008 by Jeremy Gillmor Kahn with additional support and
+ideas from Bill McNeill
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
