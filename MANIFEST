@@ -31,6 +31,7 @@ Const/t/50walking.t
 
 HeadFinder/HeadFinder.pm
 HeadFinder/Makefile.PL
+HeadFinder/data/ptb.head.charniak
 
 # scripts for general use
 scripts/get-words
@@ -40,6 +41,3 @@ scripts/tree-collapse
 scripts/tree-inflate
 scripts/vocabulary
 
-
-
-META.yml                                 Module meta-data (added by MakeMaker)
